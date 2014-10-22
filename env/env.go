@@ -2,6 +2,7 @@ package env
 
 import (
 	"os"
+	"strconv"
 )
 
 // like os.Getenv and provide default value
@@ -24,4 +25,15 @@ func GetBool(key string, defvalue bool) (value bool) {
 		value = defvalue
 	}
 	return value
+}
+
+func GetInt(key string, defvalue int) (value int) {
+	var (
+		err error
+	)
+	envValue := os.Getenv(key)
+	if value, err = strconv.Atoi(envValue); err != nil {
+		value = defvalue
+	}
+	return
 }

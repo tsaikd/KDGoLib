@@ -7,8 +7,10 @@ import (
 )
 
 func Test_GetString(t *testing.T) {
-	var value string
-	assert := assert.New(t)
+	var (
+		assert = assert.New(t)
+		value  string
+	)
 
 	value = GetString("IMPOSSIBLE_ENV_KEY", "Impossible value !")
 	assert.Equal("Impossible value !", value, "Get ENV 'IMPOSSIBLE_ENV_KEY'")
@@ -19,8 +21,10 @@ func Test_GetString(t *testing.T) {
 }
 
 func Test_GetBool(t *testing.T) {
-	var value bool
-	assert := assert.New(t)
+	var (
+		assert = assert.New(t)
+		value  bool
+	)
 
 	value = GetBool("IMPOSSIBLE_ENV_KEY", true)
 	assert.Equal(true, value, "Get ENV 'IMPOSSIBLE_ENV_KEY'")
@@ -41,5 +45,22 @@ func Test_GetBool(t *testing.T) {
 
 	value = GetBool("IMPOSSIBLE_ENV_KEY_FALSE", false)
 	assert.Equal(false, value, "Get ENV 'IMPOSSIBLE_ENV_KEY_FALSE'")
+}
 
+func Test_GetInt(t *testing.T) {
+	var (
+		assert = assert.New(t)
+		value  int
+	)
+
+	value = GetInt("IMPOSSIBLE_ENV_KEY", 9527)
+	assert.Equal(9527, value, "Get ENV 'IMPOSSIBLE_ENV_KEY'")
+
+	os.Setenv("IMPOSSIBLE_ENV_KEY_9527", "9527")
+	value = GetInt("IMPOSSIBLE_ENV_KEY_9527", 168)
+	assert.Equal(9527, value, "Get ENV 'IMPOSSIBLE_ENV_KEY_9527'")
+
+	os.Setenv("IMPOSSIBLE_ENV_KEY_9527", "Not a number")
+	value = GetInt("IMPOSSIBLE_ENV_KEY_FALSE", 168)
+	assert.Equal(168, value, "Get ENV 'IMPOSSIBLE_ENV_KEY_9527'")
 }
