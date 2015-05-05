@@ -7,16 +7,23 @@ import (
 	"github.com/tsaikd/KDGoLib/must"
 )
 
-func TemplateOnce(text string, data interface{}) (res string, err error) {
+func TemplateString(tmpl *template.Template, data interface{}) (res string, err error) {
 	buffer := bytes.NewBuffer(nil)
-	tmpl := template.New("")
-	if _, err = tmpl.Parse(text); err != nil {
-		return
-	}
 	if err = tmpl.Execute(buffer, data); err != nil {
 		return
 	}
 	res = buffer.String()
+	return
+}
+
+func TemplateOnce(text string, data interface{}) (res string, err error) {
+	tmpl := template.New("")
+	if _, err = tmpl.Parse(text); err != nil {
+		return
+	}
+	if res, err = TemplateString(tmpl, data); err != nil {
+		return
+	}
 	return
 }
 
