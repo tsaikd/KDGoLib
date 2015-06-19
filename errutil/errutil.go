@@ -6,32 +6,32 @@ import (
 )
 
 func New(text string, errs ...error) error {
-	e := &typeError{
-		errs: []error{errors.New(text)},
+	e := &ErrorSlice{
+		Errs: []error{errors.New(text)},
 	}
 	for _, err := range errs {
 		switch err.(type) {
-		case *typeError:
-			e.errs = append(e.errs, err.(*typeError).errs...)
+		case *ErrorSlice:
+			e.Errs = append(e.Errs, err.(*ErrorSlice).Errs...)
 			break
 		default:
-			e.errs = append(e.errs, err)
+			e.Errs = append(e.Errs, err)
 			break
 		}
 	}
 	return e
 }
 
-type typeError struct {
-	errs []error
+type ErrorSlice struct {
+	Errs []error
 }
 
-func (t *typeError) Error() string {
-	if len(t.errs) < 1 {
+func (t *ErrorSlice) Error() string {
+	if len(t.Errs) < 1 {
 		return ""
 	}
-	buffer := bytes.NewBufferString(t.errs[0].Error())
-	for _, e := range t.errs[1:] {
+	buffer := bytes.NewBufferString(t.Errs[0].Error())
+	for _, e := range t.Errs[1:] {
 		buffer.WriteString("\n")
 		buffer.WriteString(e.Error())
 	}
