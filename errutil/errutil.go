@@ -5,35 +5,60 @@ import (
 	"errors"
 )
 
-func New(text string, errs ...error) error {
-	e := &ErrorSlice{
-		Errs: []error{errors.New(text)},
-	}
+type ErrorSlice struct {
+	ErrorMsg  string   `json:"error,omitempty"`
+	ErrorMsgs []string `json:"errors,omitempty"`
+	errors    []error
+}
+
+func NewErrorSlice(errs ...error) (errorslice *ErrorSlice) {
+	e := ErrorSlice{}
 	for _, err := range errs {
+		if err == nil {
+			continue
+		}
 		switch err.(type) {
+		case ErrorSlice:
+			e.errors = append(e.errors, err.(ErrorSlice).errors...)
 		case *ErrorSlice:
-			e.Errs = append(e.Errs, err.(*ErrorSlice).Errs...)
-			break
+			if err.(*ErrorSlice) == nil {
+				continue
+			}
+			e.errors = append(e.errors, err.(*ErrorSlice).errors...)
 		default:
-			e.Errs = append(e.Errs, err)
-			break
+			e.errors = append(e.errors, err)
 		}
 	}
-	return e
+	if len(e.errors) > 0 {
+		e.ErrorMsg = e.errors[0].Error()
+		for _, err := range e.errors {
+			e.ErrorMsgs = append(e.ErrorMsgs, err.Error())
+		}
+	} else {
+		return nil
+	}
+	return &e
 }
 
-type ErrorSlice struct {
-	Errs []error
+func New(text string, errs ...error) error {
+	if text != "" {
+		errs = append([]error{errors.New(text)}, errs...)
+	}
+	return NewErrorSlice(errs...)
 }
 
-func (t *ErrorSlice) Error() string {
-	if len(t.Errs) < 1 {
+func Error(errs ...error) error {
+	return NewErrorSlice(errs...)
+}
+
+func (t ErrorSlice) Error() string {
+	if len(t.ErrorMsgs) < 1 {
 		return ""
 	}
-	buffer := bytes.NewBufferString(t.Errs[0].Error())
-	for _, e := range t.Errs[1:] {
+	buffer := bytes.NewBufferString(t.ErrorMsgs[0])
+	for _, e := range t.ErrorMsgs[1:] {
 		buffer.WriteString("\n")
-		buffer.WriteString(e.Error())
+		buffer.WriteString(e)
 	}
 	return buffer.String()
 }

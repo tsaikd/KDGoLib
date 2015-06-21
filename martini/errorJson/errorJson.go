@@ -11,35 +11,19 @@ import (
 )
 
 type ResponseError struct {
-	Status int      `json:"status,omitempty"`
-	Error  string   `json:"error,omitempty"`
-	Errors []string `json:"errors,omitempty"`
+	Status int `json:"status,omitempty"`
+	*errutil.ErrorSlice
 }
 
-func sliceError(err error) []error {
-	errorslice, ok := err.(*errutil.ErrorSlice)
-	if ok {
-		return errorslice.Errs
-	} else {
-		return []error{err}
-	}
+func newResponseError(status int, err error, errs ...error) (reserr ResponseError) {
+	errs = append([]error{err}, errs...)
+	reserr.Status = status
+	reserr.ErrorSlice = errutil.NewErrorSlice(errs...)
+	return
 }
 
 func RenderErrorJSON(render render.Render, status int, err error, errs ...error) {
-	errslice := sliceError(err)
-	for _, e := range errs {
-		errslice = append(errslice, sliceError(e)...)
-	}
-
-	reserr := ResponseError{}
-	reserr.Status = status
-	if len(errslice) > 0 {
-		reserr.Error = errslice[0].Error()
-		for _, e := range errslice {
-			reserr.Errors = append(reserr.Errors, e.Error())
-		}
-	}
-
+	reserr := newResponseError(status, err, errs...)
 	render.JSON(status, reserr)
 }
 
@@ -49,7 +33,10 @@ func ReturnErrorProvider() martini.ReturnHandler {
 		res := rv.Interface().(http.ResponseWriter)
 		var responseVal reflect.Value
 		if len(vals) > 1 && vals[0].Kind() == reflect.Int {
-			res.WriteHeader(int(vals[0].Int()))
+			status := vals[0].Int()
+			if status > 0 {
+				res.WriteHeader(int(status))
+			}
 			responseVal = vals[1]
 		} else if len(vals) > 0 {
 			responseVal = vals[0]
