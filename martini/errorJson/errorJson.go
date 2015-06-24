@@ -42,7 +42,7 @@ func ReturnErrorProvider() martini.ReturnHandler {
 			responseVal = vals[0]
 		}
 
-		if responseVal.IsNil() {
+		if responseVal.Interface() == nil {
 			return
 		}
 		if isError(responseVal) {
