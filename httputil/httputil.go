@@ -2,7 +2,6 @@ package httputil
 
 import (
 	"crypto/tls"
-	"errors"
 	"io/ioutil"
 	"net/http"
 )
@@ -22,18 +21,16 @@ func ReadResponse(resp *http.Response) (body string, err error) {
 }
 
 func PingIgnoreCertificate(surl string) (err error) {
-	var (
-		resp *http.Response
-	)
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: tr}
-	if resp, err = client.Get(surl); err != nil {
+	resp, err := client.Get(surl)
+	if err != nil {
 		return
 	}
-	if resp.StatusCode > 200 || resp.StatusCode >= 400 {
-		return errors.New("return unexpect status code")
+	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
+		return &ErrorPingFailed{surl, resp.StatusCode}
 	}
 	return
 }
