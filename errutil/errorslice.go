@@ -9,6 +9,19 @@ type ErrorSlice struct {
 	ErrorMsg  string   `json:"error,omitempty"`
 	ErrorMsgs []string `json:"errors,omitempty"`
 	errors    []error
+	wrapper   *ErrorWrapper
+}
+
+func castErrorSlice(err error) *ErrorSlice {
+	switch err.(type) {
+	case ErrorSlice:
+		errorslice := err.(ErrorSlice)
+		return &errorslice
+	case *ErrorSlice:
+		return err.(*ErrorSlice)
+	default:
+		return nil
+	}
 }
 
 func NewErrorSlice(errs ...error) (errorslice *ErrorSlice) {
@@ -17,16 +30,11 @@ func NewErrorSlice(errs ...error) (errorslice *ErrorSlice) {
 		if err == nil {
 			continue
 		}
-		switch err.(type) {
-		case ErrorSlice:
-			e.errors = append(e.errors, err.(ErrorSlice).errors...)
-		case *ErrorSlice:
-			if err.(*ErrorSlice) == nil {
-				continue
-			}
-			e.errors = append(e.errors, err.(*ErrorSlice).errors...)
-		default:
+		es := castErrorSlice(err)
+		if es == nil {
 			e.errors = append(e.errors, err)
+		} else {
+			e.errors = append(e.errors, es.errors...)
 		}
 	}
 	if len(e.errors) > 0 {
