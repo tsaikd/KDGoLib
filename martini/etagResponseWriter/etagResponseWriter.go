@@ -84,7 +84,7 @@ func (t *etagResponseWriter) isIgnoreIfHeader(req *http.Request) bool {
 }
 
 func (t *etagResponseWriter) write(b []byte) (int, error) {
-	if !t.writeStatus {
+	if !t.writeStatus && t.status > 0 {
 		t.rw.WriteHeader(t.status)
 		t.writeStatus = true
 	}
