@@ -10,5 +10,5 @@ type ErrorPingFailed struct {
 }
 
 func (t *ErrorPingFailed) Error() string {
-	return fmt.Sprintf("ping return unexpect status code: %v", t.StatusCode)
+	return fmt.Sprintf("ping return unexpect status code: %v, %v", t.StatusCode, t.Url)
 }
