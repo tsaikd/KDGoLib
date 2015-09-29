@@ -1,21 +1,19 @@
 package flagutil
 
 import (
-	"fmt"
-
 	"github.com/codegangsta/cli"
+	"github.com/tsaikd/KDGoLib/errutil"
 )
 
 var (
 	flags = map[string]cli.Flag{}
+
+	ErrorFlagDefined1 = errutil.ErrorFactory("flag %s defined")
 )
 
 func AddBoolFlag(cliflag cli.BoolFlag) cli.BoolFlag {
-	var (
-		ok bool
-	)
-	if _, ok = flags[cliflag.Name]; ok {
-		panic(fmt.Errorf("flag %s defined", cliflag.Name))
+	if _, ok := flags[cliflag.Name]; ok {
+		panic(ErrorFlagDefined1.New(nil, cliflag.Name))
 	} else {
 		flags[cliflag.Name] = cliflag
 	}
@@ -23,11 +21,8 @@ func AddBoolFlag(cliflag cli.BoolFlag) cli.BoolFlag {
 }
 
 func AddIntFlag(cliflag cli.IntFlag) cli.IntFlag {
-	var (
-		ok bool
-	)
-	if _, ok = flags[cliflag.Name]; ok {
-		panic(fmt.Errorf("flag %s defined", cliflag.Name))
+	if _, ok := flags[cliflag.Name]; ok {
+		panic(ErrorFlagDefined1.New(nil, cliflag.Name))
 	} else {
 		flags[cliflag.Name] = cliflag
 	}
@@ -35,11 +30,8 @@ func AddIntFlag(cliflag cli.IntFlag) cli.IntFlag {
 }
 
 func AddStringFlag(cliflag cli.StringFlag) cli.StringFlag {
-	var (
-		ok bool
-	)
-	if _, ok = flags[cliflag.Name]; ok {
-		panic(fmt.Errorf("flag %s defined", cliflag.Name))
+	if _, ok := flags[cliflag.Name]; ok {
+		panic(ErrorFlagDefined1.New(nil, cliflag.Name))
 	} else {
 		flags[cliflag.Name] = cliflag
 	}
