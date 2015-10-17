@@ -12,6 +12,7 @@ import (
 var (
 	ErrorUnsupportedScanType1 = errutil.ErrorFactory("unsupported scan type: %v")
 	ErrorInvalidObjType1      = errutil.ErrorFactory("invalid obj type: %T")
+	ErrorNoValueFound1        = errutil.ErrorFactory("no value found for key %v")
 )
 
 // Set obj to value's JSON representation
@@ -38,23 +39,79 @@ func SQLValueJson(obj interface{}) (value driver.Value, err error) {
 	return
 }
 
+func ensureScanValue(obj interface{}) (refval reflect.Value, err error) {
+	// Get the value of obj and make sure it's either a pointer or nil
+	rv := reflect.ValueOf(obj)
+	if rv.Kind() != reflect.Ptr || rv.IsNil() {
+		return rv, ErrorInvalidObjType1.New(nil, obj)
+	}
+	// So we can get its actual value
+	pv := reflect.Indirect(rv)
+
+	return pv, nil
+}
+
 // Set obj to value's string representation
 func SQLScanString(obj interface{}, value interface{}) (err error) {
 	if value == nil {
 		return
 	}
 
-	// Get the value of obj and make sure it's either a pointer or nil
-	rv := reflect.ValueOf(obj)
-	if rv.Kind() != reflect.Ptr || rv.IsNil() {
-		return ErrorInvalidObjType1.New(nil, obj)
+	pv, err := ensureScanValue(obj)
+	if err != nil {
+		return
 	}
-	// So we can get its actual value
-	pv := reflect.Indirect(rv)
 
 	switch value.(type) {
 	case []byte:
 		pv.SetString(fmt.Sprintf("%s", value))
+		return
+	default:
+		return ErrorUnsupportedScanType1.New(nil, value)
+	}
+}
+
+// Set obj to value's enum in stringMapEnum representation
+func SQLScanEnumString(obj interface{}, value interface{}, stringMapEnum map[string]interface{}) (err error) {
+	if value == nil {
+		return
+	}
+
+	pv, err := ensureScanValue(obj)
+	if err != nil {
+		return
+	}
+
+	switch value.(type) {
+	case []byte:
+		enumstr := fmt.Sprintf("%s", value)
+		enumval, ok := stringMapEnum[enumstr]
+		if !ok {
+			return ErrorNoValueFound1.New(nil, value)
+		}
+		ev := reflect.ValueOf(enumval)
+		pv.Set(ev)
+		return
+	default:
+		return ErrorUnsupportedScanType1.New(nil, value)
+	}
+}
+
+// Set obj to value's stringslice representation
+func SQLScanStringSlice(obj interface{}, value interface{}) (err error) {
+	if value == nil {
+		return
+	}
+
+	pv, err := ensureScanValue(obj)
+	if err != nil {
+		return
+	}
+
+	switch value.(type) {
+	case []byte:
+		stringslice := parseArray(string(value.([]byte)))
+		pv.Set(reflect.ValueOf(stringslice))
 		return
 	default:
 		return ErrorUnsupportedScanType1.New(nil, value)
