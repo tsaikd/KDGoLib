@@ -1,6 +1,7 @@
 package sqlutil
 
 import (
+	"bytes"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
@@ -33,9 +34,14 @@ func SQLValueJson(obj interface{}) (value driver.Value, err error) {
 	if obj == nil {
 		return
 	}
-	if value, err = json.Marshal(obj); err != nil {
+	jsondata, err := json.Marshal(obj)
+	if err != nil {
 		return
 	}
+	if bytes.Equal([]byte("{}"), jsondata) {
+		return
+	}
+	value = jsondata
 	return
 }
 
