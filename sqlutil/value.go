@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/tsaikd/KDGoLib/errutil"
 )
@@ -122,4 +123,35 @@ func SQLScanStringSlice(obj interface{}, value interface{}) (err error) {
 	default:
 		return ErrorUnsupportedScanType1.New(nil, value)
 	}
+}
+
+// Return s postgresql representation which implements driver.Value
+func SQLValueStringSlice(obj interface{}) (value driver.Value, err error) {
+	if obj == nil {
+		return
+	}
+
+	rv := reflect.ValueOf(obj)
+
+	switch rv.Kind() {
+	case reflect.Ptr:
+		if rv.IsNil() {
+			return
+		} else {
+			return SQLValueStringSlice(reflect.Indirect(rv).Interface())
+		}
+	case reflect.Slice:
+		switch rv.Type().Elem().Kind() {
+		case reflect.String:
+			strs := []string{}
+			for i, rvlen := 0, rv.Len(); i < rvlen; i++ {
+				rvelem := rv.Index(i)
+				strelem := `"` + strings.Replace(strings.Replace(rvelem.String(), `\`, `\\\`, -1), `"`, `\"`, -1) + `"`
+				strs = append(strs, strelem)
+			}
+			return "{" + strings.Join(strs, ",") + "}", nil
+		}
+	}
+
+	return "", ErrorInvalidObjType1.New(nil, obj)
 }
