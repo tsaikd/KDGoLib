@@ -70,3 +70,12 @@ func (t ErrorSlice) Error() string {
 	}
 	return buffer.String()
 }
+
+func (t ErrorSlice) ContainFunc(matchFunc func(error) bool) bool {
+	for _, err := range t.errors {
+		if matchFunc(err) {
+			return true
+		}
+	}
+	return false
+}
