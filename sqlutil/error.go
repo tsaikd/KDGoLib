@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
+	"github.com/tsaikd/KDGoLib/errutil"
 )
 
 func IsErrorNoRowsInResultSet(err error) bool {
@@ -11,6 +12,11 @@ func IsErrorNoRowsInResultSet(err error) bool {
 		return false
 	}
 	return err.Error() == "sql: no rows in result set"
+}
+
+func IsContainErrorNoRowsInResultSet(err error) bool {
+	es := errutil.NewErrorSlice(err)
+	return es.ContainFunc(IsErrorNoRowsInResultSet)
 }
 
 func IsErrorDuplicateViolateUniqueConstraint(err error) bool {
@@ -29,6 +35,11 @@ func IsErrorDuplicateViolateUniqueConstraint(err error) bool {
 	}
 }
 
+func IsContainErrorDuplicateViolateUniqueConstraint(err error) bool {
+	es := errutil.NewErrorSlice(err)
+	return es.ContainFunc(IsErrorDuplicateViolateUniqueConstraint)
+}
+
 func IsErrorTsquerySyntax(err error) bool {
 	if err == nil {
 		return false
@@ -43,4 +54,9 @@ func IsErrorTsquerySyntax(err error) bool {
 	default:
 		return strings.Contains(err.Error(), "pq: syntax error in tsquery:")
 	}
+}
+
+func IsContainErrorTsquerySyntax(err error) bool {
+	es := errutil.NewErrorSlice(err)
+	return es.ContainFunc(IsErrorTsquerySyntax)
 }
