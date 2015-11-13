@@ -4,21 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 	"runtime"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/errutil"
-)
-
-var (
-	DefaultConsoleLogger = &logrus.Logger{
-		Out:       os.Stdout,
-		Formatter: &ConsoleLogFormatter{},
-		Hooks:     make(logrus.LevelHooks),
-		Level:     logrus.InfoLevel,
-	}
 )
 
 const (
@@ -36,6 +26,7 @@ var (
 type ConsoleLogFormatter struct {
 	TimestampFormat string
 	Flag            int
+	CallerOffset    int
 }
 
 func addspace(text string, addspaceflag bool) (string, bool) {
@@ -68,7 +59,7 @@ func (t *ConsoleLogFormatter) Format(entry *logrus.Entry) (data []byte, err erro
 	}
 
 	if t.Flag&(Lshortfile|Llongfile) != 0 {
-		_, file, line, ok := runtime.Caller(7)
+		_, file, line, ok := runtime.Caller(7 + t.CallerOffset)
 		if !ok {
 			file = "???"
 			line = 0
