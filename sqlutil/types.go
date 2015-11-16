@@ -16,6 +16,22 @@ func (t *SQLStringSlice) Value() (value driver.Value, err error) {
 	return SQLValueStringSlice(t)
 }
 
+func (t *SQLStringSlice) ToStringSlice() *[]string {
+	if t == nil {
+		return nil
+	}
+	data := []string(*t)
+	return &data
+}
+
+func NewSQLStringSlice(s *[]string) *SQLStringSlice {
+	if s == nil {
+		return nil
+	}
+	data := SQLStringSlice(*s)
+	return &data
+}
+
 type SQLJsonMap map[string]interface{}
 
 func (t *SQLJsonMap) Scan(value interface{}) (err error) {
