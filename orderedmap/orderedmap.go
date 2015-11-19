@@ -75,6 +75,14 @@ func (t OrderedMap) Slice() []interface{} {
 	return t.dataslice
 }
 
+func (t *OrderedMap) Len() int {
+	if t == nil {
+		return 0
+	}
+	t.ensureDataStruct()
+	return len(t.dataslice)
+}
+
 func (t OrderedMap) MarshalJSON() ([]byte, error) {
 	t.ensureDataStruct()
 	return json.Marshal(t.Slice())
