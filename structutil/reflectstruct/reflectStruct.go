@@ -11,6 +11,7 @@ import (
 	"github.com/tsaikd/KDGoLib/reflectutil"
 )
 
+// expose errors
 var (
 	ErrorUnknownSourceMapKeyType1       = errutil.ErrorFactory("unknown source map key type: %v")
 	ErrorUnknownSourceType1             = errutil.ErrorFactory("unknown source type: %v")
@@ -91,22 +92,36 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 	return ErrorUnsupportedReflectFieldMethod2.New(nil, field.Kind(), val.Kind())
 }
 
+func buildReflectFieldInfo(fieldInfoMap map[string]reflect.Value, value reflect.Value) {
+	for i := 0; i < value.NumField(); i++ {
+		field := value.Type().Field(i)
+		if tag := field.Tag.Get("json"); tag != "" {
+			if tagvals := strings.Split(tag, ","); len(tagvals) > 0 && tagvals[0] != "-" {
+				fieldInfoMap[tagvals[0]] = value.Field(i)
+				continue
+			}
+		}
+		if tag := field.Tag.Get("reflect"); tag == "inherit" {
+			childValue := value.Field(i)
+			if childValue.Kind() == reflect.Ptr && childValue.IsNil() {
+				childValue = reflect.New(childValue.Type().Elem())
+				value.Field(i).Set(childValue)
+				childValue = childValue.Elem()
+			}
+			buildReflectFieldInfo(fieldInfoMap, childValue)
+		}
+	}
+}
+
+// ReflectStruct reflect data from src to dest
 func ReflectStruct(dest interface{}, src interface{}) (err error) {
 	if dest == nil || src == nil {
 		return
 	}
 
-	destReflectMap_TagName_FieldIndex := map[string]int{}
-
+	fieldInfoMap := map[string]reflect.Value{}
 	valdest := reflectutil.EnsureValue(reflect.ValueOf(dest))
-	for i := 0; i < valdest.NumField(); i++ {
-		tfield := valdest.Type().Field(i)
-		tag := tfield.Tag
-		tagjsons := strings.Split(tag.Get("json"), ",")
-		if len(tagjsons) > 0 && tagjsons[0] != "-" {
-			destReflectMap_TagName_FieldIndex[tagjsons[0]] = i
-		}
-	}
+	buildReflectFieldInfo(fieldInfoMap, valdest)
 
 	valsrc := reflect.ValueOf(src)
 
@@ -116,9 +131,8 @@ func ReflectStruct(dest interface{}, src interface{}) (err error) {
 			switch valsrcmapkey.Kind() {
 			case reflect.String:
 				srcmapkey := valsrcmapkey.Interface().(string)
-				if i, ok := destReflectMap_TagName_FieldIndex[srcmapkey]; ok {
+				if valDestField, ok := fieldInfoMap[srcmapkey]; ok {
 					valsrcmapval := reflectutil.EnsureValue(valsrc.MapIndex(valsrcmapkey))
-					valDestField := valdest.Field(i)
 					if err = reflectField(valDestField, valsrcmapval); err != nil {
 						return
 					}
