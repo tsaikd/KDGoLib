@@ -1,7 +1,6 @@
 package errorJson
 
 import (
-	"net/http"
 	"reflect"
 
 	"github.com/codegangsta/inject"
@@ -10,33 +9,59 @@ import (
 	"github.com/tsaikd/KDGoLib/errutil"
 )
 
-type ResponseError struct {
+// ReturnError define api function call return error struct
+type ReturnError struct {
+	Status int
+	Body   []byte
+	Error  error
+}
+
+type responseError struct {
 	Status int `json:"status,omitempty"`
 	*errutil.ErrorSlice
 }
 
-func newResponseError(status int, err error, errs ...error) (reserr ResponseError) {
-	errs = append([]error{err}, errs...)
-	reserr.Status = status
-	reserr.ErrorSlice = errutil.NewErrorSlice(errs...)
-	return
-}
-
+// RenderErrorJSON render error in json format
 func RenderErrorJSON(render render.Render, status int, err error, errs ...error) {
-	reserr := newResponseError(status, err, errs...)
+	errConcat := append([]error{err}, errs...)
+	reserr := responseError{
+		Status:     status,
+		ErrorSlice: errutil.NewErrorSlice(errConcat...),
+	}
 	render.JSON(status, reserr)
 }
 
-func ReturnErrorProvider() martini.ReturnHandler {
+// BindMartini bind return error handler to martini instance
+func BindMartini(m *martini.Martini) {
+	if rv := m.Get(inject.InterfaceOf((*render.Render)(nil))); !rv.IsValid() {
+		m.Use(render.Renderer())
+	}
+
+	m.Map(returnErrorHandler())
+	m.Use(returnErrorProvider())
+
+	return
+}
+
+func returnErrorProvider() martini.Handler {
+	return func(ctx martini.Context) {
+		returnError := &ReturnError{}
+		ctx.Map(returnError)
+	}
+}
+
+func returnErrorHandler() martini.ReturnHandler {
 	return func(ctx martini.Context, vals []reflect.Value) {
-		rv := ctx.Get(inject.InterfaceOf((*http.ResponseWriter)(nil)))
-		res := rv.Interface().(http.ResponseWriter)
+		if ctx.Written() {
+			return
+		}
+
+		returnError := ctx.Get(reflect.TypeOf(&ReturnError{})).Interface().(*ReturnError)
+		render := ctx.Get(inject.InterfaceOf((*render.Render)(nil))).Interface().(render.Render)
+
 		var responseVal reflect.Value
 		if len(vals) > 1 && vals[0].Kind() == reflect.Int {
-			status := vals[0].Int()
-			if status > 0 {
-				res.WriteHeader(int(status))
-			}
+			returnError.Status = int(vals[0].Int())
 			responseVal = vals[1]
 		} else if len(vals) > 0 {
 			responseVal = vals[0]
@@ -46,9 +71,15 @@ func ReturnErrorProvider() martini.ReturnHandler {
 			return
 		}
 		if isError(responseVal) {
-			r := ctx.Get(inject.InterfaceOf((*render.Render)(nil))).Interface().(render.Render)
-			err := responseVal.Interface().(error)
-			RenderErrorJSON(r, 404, err)
+			if returnError.Error == nil {
+				returnError.Error = responseVal.Interface().(error)
+			} else {
+				returnError.Error = errutil.NewErrorSlice(responseVal.Interface().(error), returnError.Error)
+			}
+			if returnError.Status == 0 {
+				returnError.Status = 404
+			}
+			RenderErrorJSON(render, returnError.Status, returnError.Error)
 			return
 		}
 
@@ -56,10 +87,11 @@ func ReturnErrorProvider() martini.ReturnHandler {
 			responseVal = responseVal.Elem()
 		}
 		if isByteSlice(responseVal) {
-			res.Write(responseVal.Bytes())
+			returnError.Body = responseVal.Bytes()
 		} else {
-			res.Write([]byte(responseVal.String()))
+			returnError.Body = []byte(responseVal.String())
 		}
+		render.Data(returnError.Status, returnError.Body)
 	}
 }
 
