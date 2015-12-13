@@ -6,22 +6,29 @@ import (
 )
 
 type Version struct {
-	VERSION   string `json:"version"`
-	BUILDTIME string `json:"buildtime,omitempty"`
-	GITCOMMIT string `json:"gitcommit,omitempty"`
+	VERSION   string      `json:"version"`
+	BUILDTIME string      `json:"buildtime,omitempty"`
+	GITCOMMIT string      `json:"gitcommit,omitempty"`
+	GODEPS    interface{} `json:"godeps,omitempty"`
 }
 
 var (
 	VERSION   = "0.0.0"
 	BUILDTIME string
 	GITCOMMIT string
+	GODEPS    string
 )
 
 func Get() (ver Version) {
+	var godeps interface{}
+	if GODEPS != "" {
+		json.Unmarshal([]byte(GODEPS), &godeps)
+	}
 	ver = Version{
 		VERSION:   VERSION,
 		BUILDTIME: BUILDTIME,
 		GITCOMMIT: GITCOMMIT,
+		GODEPS:    godeps,
 	}
 	return
 }
