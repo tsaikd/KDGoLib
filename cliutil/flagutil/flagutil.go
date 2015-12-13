@@ -29,7 +29,25 @@ func AddIntFlag(cliflag cli.IntFlag) cli.IntFlag {
 	return cliflag
 }
 
+func AddIntSliceFlag(cliflag cli.IntSliceFlag) cli.IntSliceFlag {
+	if _, ok := flags[cliflag.Name]; ok {
+		panic(ErrorFlagDefined1.New(nil, cliflag.Name))
+	} else {
+		flags[cliflag.Name] = cliflag
+	}
+	return cliflag
+}
+
 func AddStringFlag(cliflag cli.StringFlag) cli.StringFlag {
+	if _, ok := flags[cliflag.Name]; ok {
+		panic(ErrorFlagDefined1.New(nil, cliflag.Name))
+	} else {
+		flags[cliflag.Name] = cliflag
+	}
+	return cliflag
+}
+
+func AddStringSliceFlag(cliflag cli.StringSliceFlag) cli.StringSliceFlag {
 	if _, ok := flags[cliflag.Name]; ok {
 		panic(ErrorFlagDefined1.New(nil, cliflag.Name))
 	} else {
