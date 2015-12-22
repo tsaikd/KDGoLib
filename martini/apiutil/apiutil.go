@@ -7,6 +7,7 @@ import (
 	"github.com/tsaikd/KDGoLib/errutil"
 )
 
+// errors
 var (
 	ErrorAPIRegisted2 = errutil.ErrorFactory("API already registed for method=%q pattern=%1")
 )
@@ -16,22 +17,24 @@ var (
 	registedApiCallerMap        = map[string]apiConfig{}
 )
 
-// bind all registed apis to martini router
+// BindRouter bind all registed apis to martini router
 func BindRouter(router martini.Router) {
 	for _, apiconf := range registedApiMethodPatternMap {
 		router.AddRoute(apiconf.Method, apiconf.Pattern, apiconf.Handlers...)
 	}
 }
 
+// RegistedApiMap return all registed API
 func RegistedApiMap() map[string]apiConfig {
 	return registedApiMethodPatternMap
 }
 
+// RegistedSortedApiMap return all registed API sorted
 func RegistedSortedApiMap() []apiConfig {
 	results := []apiConfig{}
 
 	keys := []string{}
-	for key, _ := range registedApiCallerMap {
+	for key := range registedApiCallerMap {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)
@@ -43,8 +46,15 @@ func RegistedSortedApiMap() []apiConfig {
 	return results
 }
 
+// Regist API
 func Regist(method string, pattern string, handlers ...martini.Handler) {
 	WithInfo(nil).Regist(method, pattern, handlers...)
+}
+
+// Reset all registed API, used for testing
+func Reset() {
+	registedApiMethodPatternMap = map[string]apiConfig{}
+	registedApiCallerMap = map[string]apiConfig{}
 }
 
 func Get(pattern string, handlers ...martini.Handler) {
