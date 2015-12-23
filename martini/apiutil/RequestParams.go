@@ -22,6 +22,9 @@ type RequestParams []RequestParam
 
 // Upsert append RequestParam to RequestParams if not exist
 func (p *RequestParams) Upsert(param string, paramType *reflect.StructField) {
+	if p == nil {
+		return
+	}
 	t := *p
 	for i, reqparam := range t {
 		if reqparam.FieldName == param {
@@ -41,6 +44,9 @@ func (p *RequestParams) Upsert(param string, paramType *reflect.StructField) {
 }
 
 func (p *RequestParams) delete(param string) (err error) {
+	if p == nil {
+		return
+	}
 	t := *p
 	for i, reqparam := range t {
 		if reqparam.FieldName == param {
@@ -54,6 +60,9 @@ func (p *RequestParams) delete(param string) (err error) {
 
 // Delete param in RequestParams
 func (p *RequestParams) Delete(params ...string) (err error) {
+	if p == nil {
+		return
+	}
 	for _, param := range params {
 		if err = p.delete(param); err != nil {
 			return
@@ -69,6 +78,9 @@ func (p *RequestParams) Clone() RequestParams {
 
 // FieldNames return field names in string slice type
 func (p *RequestParams) FieldNames() (results []string) {
+	if p == nil {
+		return
+	}
 	t := *p
 	for _, reqparam := range t {
 		results = append(results, reqparam.FieldName)

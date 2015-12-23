@@ -19,10 +19,11 @@ var (
 
 // RequestInfo contains request function name, params
 type RequestInfo struct {
-	FuncName string
-	FuncArgs RequestParams
-	Path     string
-	Params   RequestParams
+	FuncName     string
+	FuncArgs     RequestParams
+	Path         string
+	Params       RequestParams
+	ExtraStructs ExtraStructs
 }
 
 // AnalyzeRequestStruct analyze request struct object, produce request struct map
@@ -48,32 +49,7 @@ func AnalyzeRequestStruct(
 
 	// analyze request struct
 	if requestStruct != nil {
-		reflectStruct, ok := requestStruct.(reflect.Type)
-		if !ok {
-			reflectStruct = reflect.TypeOf(requestStruct)
-		}
-		for i := 0; i < reflectStruct.NumField(); i++ {
-			field := reflectStruct.Field(i)
-
-			if fieldTag := field.Tag.Get("apijs"); fieldTag == "inherit" {
-				extends := AnalyzeRequestStruct("", field.Type, nil, nil)
-				for _, paramType := range extends.Params {
-					reqinfo.FuncArgs.Upsert(paramType.FieldName, &paramType.FieldType)
-					reqinfo.Params.Upsert(paramType.FieldName, &paramType.FieldType)
-				}
-				continue
-			}
-
-			if fieldTag := field.Tag.Get("json"); fieldTag != "" {
-				if tags := strings.Split(fieldTag, ","); len(tags) > 0 {
-					jsonName := tags[0]
-					if jsonName != "-" {
-						reqinfo.FuncArgs.Upsert(jsonName, &field)
-						reqinfo.Params.Upsert(jsonName, &field)
-					}
-				}
-			}
-		}
+		AnalyzeStructParams(requestStruct, &reqinfo.FuncArgs, &reqinfo.Params, &reqinfo.ExtraStructs)
 	}
 
 	// analyze pattern for path
@@ -130,6 +106,59 @@ func GetFuncNameByPattern(
 	}
 
 	return result
+}
+
+// AnalyzeStructParams analyze requestStruct fields and fill funcArgs/params
+func AnalyzeStructParams(
+	requestStruct interface{},
+	funcArgs *RequestParams,
+	params *RequestParams,
+	extraStructs *ExtraStructs,
+) {
+	reflectStruct, ok := requestStruct.(reflect.Type)
+	if !ok {
+		reflectStruct = reflect.TypeOf(requestStruct)
+	}
+	for i := 0; i < reflectStruct.NumField(); i++ {
+		field := reflectStruct.Field(i)
+
+		if fieldTag := field.Tag.Get("apijs"); fieldTag == "inherit" {
+			AnalyzeStructParams(field.Type, funcArgs, params, extraStructs)
+			continue
+		}
+
+		if fieldTag := field.Tag.Get("json"); fieldTag != "" {
+			if tags := strings.Split(fieldTag, ","); len(tags) > 0 {
+				jsonName := tags[0]
+				if jsonName == "-" {
+					continue
+				}
+
+				funcArgs.Upsert(jsonName, &field)
+				params.Upsert(jsonName, &field)
+
+				structType := ensureReflectStruct(field.Type)
+				switch structType.Kind() {
+				case reflect.Struct:
+					extraStruct := extraStructs.Upsert(jsonName, field.Type)
+					AnalyzeStructParams(
+						structType,
+						&extraStruct.Params,
+						nil,
+						extraStructs,
+					)
+				}
+			}
+		}
+	}
+}
+
+func ensureReflectStruct(reflectType reflect.Type) reflect.Type {
+	switch reflectType.Kind() {
+	case reflect.Slice:
+		return reflectType.Elem()
+	}
+	return reflectType
 }
 
 // GetPathByPattern return api path by analyze pattern, consume param in requestMap
