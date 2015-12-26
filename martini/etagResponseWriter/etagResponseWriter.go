@@ -75,7 +75,19 @@ func (t *etagResponseWriter) isEnableStatus(status int) bool {
 }
 
 func (t *etagResponseWriter) isIgnoreIfHeader(req *http.Request) bool {
-	for header, value := range t.config.IgnoreIfHeader {
+	for header, exist := range t.config.IgnoreIfHeaderExist {
+		value := req.Header.Get(header)
+		if exist {
+			if value != "" {
+				return true
+			}
+		} else {
+			if value == "" {
+				return true
+			}
+		}
+	}
+	for header, value := range t.config.IgnoreIfHeaderValue {
 		if req.Header.Get(header) == value {
 			return true
 		}

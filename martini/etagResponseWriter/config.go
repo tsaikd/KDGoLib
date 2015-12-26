@@ -9,11 +9,12 @@ import (
 type ETagHashFunc func(data []byte) string
 
 type ETagConfig struct {
-	MinBodyLength  int
-	EnableMethod   map[string]bool
-	EnableStatus   map[int]bool
-	IgnoreIfHeader map[string]string
-	HashFunc       ETagHashFunc
+	MinBodyLength       int
+	EnableMethod        map[string]bool
+	EnableStatus        map[int]bool
+	IgnoreIfHeaderExist map[string]bool
+	IgnoreIfHeaderValue map[string]string
+	HashFunc            ETagHashFunc
 }
 
 func NewETagConfig() *ETagConfig {
@@ -26,7 +27,10 @@ func NewETagConfig() *ETagConfig {
 			0:             true,
 			http.StatusOK: true,
 		},
-		IgnoreIfHeader: map[string]string{
+		IgnoreIfHeaderExist: map[string]bool{
+			"If-Modified-Since": true,
+		},
+		IgnoreIfHeaderValue: map[string]string{
 			"Upgrade": "websocket",
 		},
 		HashFunc: func(data []byte) string {
@@ -51,8 +55,13 @@ func (t *ETagConfig) AddStatus(status int) *ETagConfig {
 	return t
 }
 
-func (t *ETagConfig) AddIgnoreHeader(header string, value string) *ETagConfig {
-	t.IgnoreIfHeader[header] = value
+func (t *ETagConfig) AddIgnoreHeaderExist(header string, exist bool) *ETagConfig {
+	t.IgnoreIfHeaderExist[header] = exist
+	return t
+}
+
+func (t *ETagConfig) AddIgnoreHeaderValue(header string, value string) *ETagConfig {
+	t.IgnoreIfHeaderValue[header] = value
 	return t
 }
 
