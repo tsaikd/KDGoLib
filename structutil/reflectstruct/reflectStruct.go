@@ -34,8 +34,35 @@ func unsafeReflectFieldSlice2Slice(field reflect.Value, val reflect.Value) (err 
 	return
 }
 
+var (
+	jsonUnmarshaler = reflect.TypeOf((*json.Unmarshaler)(nil)).Elem()
+	typeOfBytes     = reflect.TypeOf([]byte(nil))
+)
+
 func reflectField(field reflect.Value, val reflect.Value) (err error) {
-	val = reflectutil.EnsureValue(val)
+	if field.Type().Implements(jsonUnmarshaler) {
+		switch val.Kind() {
+		case reflect.String:
+			return json.Unmarshal([]byte(`"`+val.String()+`"`), field.Interface())
+		case reflect.Slice:
+			if val.Type() == typeOfBytes {
+				return json.Unmarshal(val.Bytes(), field.Interface())
+			}
+		}
+	}
+
+	if field.CanAddr() && field.Addr().Type().Implements(jsonUnmarshaler) {
+		return reflectField(field.Addr(), val)
+	}
+
+	valElemType := val.Type()
+	switch valElemType.Kind() {
+	case reflect.Ptr:
+		valElemType = valElemType.Elem()
+		val = val.Elem()
+	case reflect.Interface:
+		val = val.Elem()
+	}
 
 	if field.Kind() == val.Kind() {
 		switch field.Kind() {
@@ -62,7 +89,7 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 	case reflect.Int64, reflect.Int:
 		switch val.Kind() {
 		case reflect.String:
-			valstr := val.Interface().(string)
+			valstr := val.String()
 			v, err := strconv.ParseInt(valstr, 0, 64)
 			if err != nil {
 				return err
@@ -70,16 +97,16 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 			field.SetInt(v)
 			return err
 		case reflect.Int:
-			field.SetInt(int64(val.Interface().(int)))
+			field.SetInt(val.Int())
 			return
 		case reflect.Float64:
-			field.SetInt(int64(val.Interface().(float64)))
+			field.SetInt(int64(val.Float()))
 			return
 		}
 	case reflect.Bool:
 		switch val.Kind() {
 		case reflect.String:
-			valstr := val.Interface().(string)
+			valstr := val.String()
 			v, err := govalidator.ToBoolean(valstr)
 			if err != nil {
 				return err

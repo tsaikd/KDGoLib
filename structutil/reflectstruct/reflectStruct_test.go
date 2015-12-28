@@ -5,9 +5,24 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tsaikd/KDGoLib/enumutil"
 )
 
 type fakeString string
+
+type enum int8
+
+const (
+	enumTest enum = 1 + iota
+)
+
+var enumFactory = enumutil.NewEnumFactory().
+	Add(enumTest, "test").
+	Build()
+
+func (t *enum) UnmarshalJSON(b []byte) (err error) {
+	return enumFactory.UnmarshalJSON(t, b)
+}
 
 func Test_ReflectStruct_empty_nothing(t *testing.T) {
 	assert := assert.New(t)
@@ -75,13 +90,19 @@ func Test_ReflectStruct_type(t *testing.T) {
 	assert.NotNil(assert)
 
 	obj := struct {
-		Str fakeString `json:"str"`
+		Str            fakeString `json:"str"`
+		Bool           bool       `json:"bool"`
+		BoolFromString bool       `json:"boolFromString"`
 	}{}
 	err := ReflectStruct(&obj, map[string]interface{}{
-		"str": "fakestring",
+		"str":            "fakestring",
+		"bool":           true,
+		"boolFromString": "true",
 	})
 	assert.NoError(err)
 	assert.Equal(fakeString("fakestring"), obj.Str)
+	assert.True(obj.Bool)
+	assert.True(obj.BoolFromString)
 }
 
 func Test_ReflectStruct_struct2struct(t *testing.T) {
@@ -147,4 +168,21 @@ func Test_ReflectStruct_tag_inherit_pointer(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal("abc", obj.Text)
 	assert.Equal("def", obj.ChildString)
+}
+
+func Test_ReflectStruct_enum(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+
+	obj := struct {
+		EnumFromString enum `json:"enumFromString"`
+		EnumFromBytes  enum `json:"enumFromBytes"`
+	}{}
+	err := ReflectStruct(&obj, map[string]interface{}{
+		"enumFromString": "test",
+		"enumFromBytes":  []byte(`"test"`),
+	})
+	assert.NoError(err)
+	assert.Equal(enumTest, obj.EnumFromString)
+	assert.Equal(enumTest, obj.EnumFromBytes)
 }
