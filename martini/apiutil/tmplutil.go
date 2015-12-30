@@ -19,7 +19,8 @@ var (
 
 // RequestInfo contains request function name, params
 type RequestInfo struct {
-	FuncName     string
+	APIName      string
+	FuncName     string // FuncName := APIName with version suffix
 	FuncArgs     RequestParams
 	Path         string
 	Params       RequestParams
@@ -37,6 +38,9 @@ func AnalyzeRequestStruct(
 ) (reqinfo RequestInfo) {
 	// analyze pattern for function name
 	if pattern != "" {
+		reqinfo.APIName = GetAPINameByPattern(pattern, nil)
+
+		// fill FuncName and add param to FuncArgs, Params
 		reqinfo.FuncName = GetFuncNameByPattern(pattern, func(param string) string {
 			reqinfo.FuncArgs.Upsert(param, nil)
 			reqinfo.Params.Upsert(param, nil)
@@ -54,6 +58,7 @@ func AnalyzeRequestStruct(
 
 	// analyze pattern for path
 	if pattern != "" {
+		// fill Path and update param to FuncArgs, Params
 		reqinfo.Path = GetPathByPattern(pattern, func(param string) string {
 			result := param
 			if replPath != nil {
@@ -72,8 +77,8 @@ func AnalyzeRequestStruct(
 	return
 }
 
-// GetFuncNameByPattern return function name by analyze pattern, check param in requestMap
-func GetFuncNameByPattern(
+// GetAPINameByPattern return API name by analyze pattern
+func GetAPINameByPattern(
 	pattern string,
 	repl func(string) string,
 ) string {
@@ -100,11 +105,20 @@ func GetFuncNameByPattern(
 
 	// remove all slash
 	result = strings.Replace(result, "/", "", -1)
+
+	return result
+}
+
+// GetFuncNameByPattern return API name by analyze pattern
+func GetFuncNameByPattern(
+	pattern string,
+	repl func(string) string,
+) string {
+	result := GetAPINameByPattern(pattern, repl)
 	versionInfos := regexpAPIVersionPrefix.FindStringSubmatch(pattern)
 	if len(versionInfos) > 1 {
 		result += "V" + versionInfos[1]
 	}
-
 	return result
 }
 
@@ -161,7 +175,7 @@ func ensureReflectStruct(reflectType reflect.Type) reflect.Type {
 	return reflectType
 }
 
-// GetPathByPattern return api path by analyze pattern, consume param in requestMap
+// GetPathByPattern return api path by analyze pattern
 func GetPathByPattern(
 	pattern string,
 	repl func(string) string,
