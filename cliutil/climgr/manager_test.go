@@ -12,7 +12,7 @@ func Test_main(t *testing.T) {
 
 	manager := NewManager()
 
-	err := manager.Add(Definition{
+	err := manager.AddModule(Module{
 		Name: "A",
 	})
 	assert.NoError(err)
@@ -21,7 +21,7 @@ func Test_main(t *testing.T) {
 	assert.Len(modules, 1)
 	assert.Equal("A", modules[0].Name)
 
-	err = manager.Add(Definition{
+	err = manager.AddModule(Module{
 		Name: "B",
 	})
 	assert.NoError(err)
@@ -31,7 +31,7 @@ func Test_main(t *testing.T) {
 	assert.Equal("A", modules[0].Name)
 	assert.Equal("B", modules[1].Name)
 
-	err = manager.Add(Definition{
+	err = manager.AddModule(Module{
 		Name:     "C",
 		Priority: -1,
 	})
