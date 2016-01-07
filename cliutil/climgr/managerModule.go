@@ -28,11 +28,6 @@ func (t *Manager) DeleteModule(module Module) {
 	delete(t.moduleNameMap, key)
 }
 
-// Reset clean all registed modules
-func (t *Manager) Reset() {
-	t.moduleNameMap = map[string]Module{}
-}
-
 // GetModules return registed modules, sorted by priority, module name
 func (t *Manager) GetModules() (results Modules) {
 	for _, module := range t.moduleNameMap {

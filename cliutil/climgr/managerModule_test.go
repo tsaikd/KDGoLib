@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_main(t *testing.T) {
+func Test_module(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
 
