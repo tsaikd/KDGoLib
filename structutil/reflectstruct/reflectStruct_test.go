@@ -91,16 +91,19 @@ func Test_ReflectStruct_type(t *testing.T) {
 
 	obj := struct {
 		Str            fakeString `json:"str"`
+		IntFromString  int64      `json:"intFromString"`
 		Bool           bool       `json:"bool"`
 		BoolFromString bool       `json:"boolFromString"`
 	}{}
 	err := ReflectStruct(&obj, map[string]interface{}{
 		"str":            "fakestring",
+		"intFromString":  "123",
 		"bool":           true,
 		"boolFromString": "true",
 	})
 	assert.NoError(err)
 	assert.Equal(fakeString("fakestring"), obj.Str)
+	assert.EqualValues(123, obj.IntFromString)
 	assert.True(obj.Bool)
 	assert.True(obj.BoolFromString)
 }

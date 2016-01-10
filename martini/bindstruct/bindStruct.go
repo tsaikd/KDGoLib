@@ -127,10 +127,12 @@ func bindParams(bindStruct reflect.Value, params martini.Params) (err error) {
 func bindJSONBody(bindStruct reflect.Value, req *http.Request) (err error) {
 	if req.Body != nil {
 		defer req.Body.Close()
-		err = json.NewDecoder(req.Body).Decode(bindStruct.Interface())
+		bufMap := map[string]interface{}{}
+		err = json.NewDecoder(req.Body).Decode(&bufMap)
 		if err != nil && err != io.EOF {
 			return
 		}
+		return reflectstruct.ReflectStruct(bindStruct.Interface(), bufMap)
 	}
 	return
 }
