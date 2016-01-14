@@ -15,11 +15,14 @@ import (
 )
 
 type apiReq struct {
-	ParamA string `json:"a" valid:"required"`
-	ParamB int64  `json:"b"`
-	ParamC string `json:"c"`
-	ParamD bool   `json:"d"`
-	ParamE bool   `json:"e"`
+	ParamA     string `json:"a" valid:"required"`
+	ParamB     int64  `json:"b"`
+	ParamC     string `json:"c"`
+	ParamD     bool   `json:"d"`
+	ParamE     bool   `json:"e"`
+	ChildSlice []struct {
+		Str string `json:"str"`
+	} `json:"childslice"`
 }
 
 type apiReqRequiredStruct struct {
@@ -30,8 +33,8 @@ func Test_binding(t *testing.T) {
 	assert := assert.New(t)
 
 	m := martini.Classic()
-	m.Map(errorJson.ReturnErrorProvider())
 	m.Use(render.Renderer())
+	errorJson.BindMartini(m.Martini)
 
 	func() {
 		runapi := false
@@ -50,7 +53,7 @@ func Test_binding(t *testing.T) {
 		runapi := false
 		m.Any("/testquery", BindStruct(apiReq{}), func(areq apiReq) {
 			assert.Equal("parama", areq.ParamA)
-			assert.Equal(123, areq.ParamB)
+			assert.EqualValues(123, areq.ParamB)
 			assert.True(areq.ParamD)
 			assert.False(areq.ParamE)
 			runapi = true
@@ -67,7 +70,7 @@ func Test_binding(t *testing.T) {
 		runapi := false
 		m.Any("/testparam/:a/:b/:d", BindStruct(apiReq{}), func(areq apiReq) {
 			assert.Equal("parama", areq.ParamA)
-			assert.Equal(123, areq.ParamB)
+			assert.EqualValues(123, areq.ParamB)
 			assert.True(areq.ParamD)
 			assert.False(areq.ParamE)
 			runapi = true
@@ -84,16 +87,24 @@ func Test_binding(t *testing.T) {
 		runapi := false
 		m.Any("/testjsonbody", BindStruct(apiReq{}), func(areq apiReq) {
 			assert.Equal("parama", areq.ParamA)
-			assert.Equal(123, areq.ParamB)
+			assert.EqualValues(123, areq.ParamB)
 			assert.Equal("paramc", areq.ParamC)
 			assert.True(areq.ParamD)
 			assert.False(areq.ParamE)
+			if assert.Len(areq.ChildSlice, 1) {
+				assert.Equal(areq.ChildSlice[0].Str, "text")
+			}
 			runapi = true
 		})
 		body, err := json.Marshal(map[string]interface{}{
 			"a": " parama ",
 			"b": 123,
 			"d": true,
+			"childslice": []map[string]interface{}{
+				map[string]interface{}{
+					"str": "text",
+				},
+			},
 		})
 		assert.NoError(err)
 		req, err := http.NewRequest("POST", "/testjsonbody?c=paramc", bytes.NewReader(body))

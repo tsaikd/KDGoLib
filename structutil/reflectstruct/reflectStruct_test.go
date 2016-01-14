@@ -1,7 +1,10 @@
 package reflectstruct
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/url"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,6 +25,255 @@ var enumFactory = enumutil.NewEnumFactory().
 
 func (t *enum) UnmarshalJSON(b []byte) (err error) {
 	return enumFactory.UnmarshalJSON(t, b)
+}
+
+func Test_reflectField(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+
+	func() {
+		var field string
+		err := reflectField(
+			reflect.ValueOf(&field),
+			reflect.ValueOf(123),
+		)
+		if !assert.NoError(err) {
+			return
+		}
+		assert.EqualValues("123", field)
+	}()
+
+	func() {
+		var field int
+		err := reflectField(
+			reflect.ValueOf(&field),
+			reflect.ValueOf("123"),
+		)
+		if !assert.NoError(err) {
+			return
+		}
+		assert.EqualValues(123, field)
+	}()
+
+	func() {
+		var field int64
+		err := reflectField(
+			reflect.ValueOf(&field),
+			reflect.ValueOf(int8(123)),
+		)
+		if !assert.NoError(err) {
+			return
+		}
+		assert.EqualValues(123, field)
+	}()
+
+	func() {
+		var field int64
+		err := reflectField(
+			reflect.ValueOf(&field),
+			reflect.ValueOf(float64(123)),
+		)
+		if !assert.NoError(err) {
+			return
+		}
+		assert.EqualValues(123, field)
+	}()
+
+	func() {
+		var field float64
+		err := reflectField(
+			reflect.ValueOf(&field),
+			reflect.ValueOf("123"),
+		)
+		if !assert.NoError(err) {
+			return
+		}
+		assert.EqualValues(123, field)
+	}()
+
+	func() {
+		var field float64
+		err := reflectField(
+			reflect.ValueOf(&field),
+			reflect.ValueOf(int8(123)),
+		)
+		if !assert.NoError(err) {
+			return
+		}
+		assert.EqualValues(123, field)
+	}()
+
+	func() {
+		var field float64
+		err := reflectField(
+			reflect.ValueOf(&field),
+			reflect.ValueOf(float32(123)),
+		)
+		if !assert.NoError(err) {
+			return
+		}
+		assert.EqualValues(123, field)
+	}()
+
+	func() {
+		var field bool
+		err := reflectField(
+			reflect.ValueOf(&field),
+			reflect.ValueOf("true"),
+		)
+		if !assert.NoError(err) {
+			return
+		}
+		assert.True(field)
+	}()
+
+	func() {
+		var field struct {
+			Str     string `json:"str"`
+			Int     int    `json:"int"`
+			Inherit struct {
+				InStr string `json:"instr"`
+			} `reflect:"inherit"`
+			ChildSlice []struct {
+				Str string `json:"str"`
+				Int int    `json:"int"`
+			} `json:"childslice"`
+		}
+		err := reflectField(
+			reflect.ValueOf(&field),
+			reflect.ValueOf(map[string]interface{}{
+				"str":   "text",
+				"int":   123,
+				"instr": "intext",
+				"childslice": []map[string]interface{}{
+					map[string]interface{}{
+						"str": "text",
+						"int": 123,
+					},
+				},
+			}),
+		)
+		if !assert.NoError(err) {
+			return
+		}
+		assert.Equal("text", field.Str)
+		assert.EqualValues(123, field.Int)
+		assert.Equal("intext", field.Inherit.InStr)
+		if !assert.Len(field.ChildSlice, 1) {
+			return
+		}
+		assert.Equal("text", field.ChildSlice[0].Str)
+		assert.EqualValues(123, field.ChildSlice[0].Int)
+	}()
+
+	func() {
+		var field struct {
+			Str     string `json:"str"`
+			Int     int    `json:"int"`
+			Inherit struct {
+				InStr string `json:"instr"`
+			} `reflect:"inherit"`
+			ChildSlice []struct {
+				Str string `json:"str"`
+				Int int    `json:"int"`
+			} `json:"childslice"`
+		}
+		var value interface{}
+		err := json.NewDecoder(bytes.NewBufferString(`
+			{
+				"str": "text",
+				"int": 123,
+				"instr": "intext",
+				"childslice": [
+					{
+						"str": "text",
+						"int": 123
+					}
+				]
+			}
+		`)).Decode(&value)
+		assert.NoError(err)
+		err = reflectField(
+			reflect.ValueOf(&field),
+			reflect.ValueOf(value),
+		)
+		if !assert.NoError(err) {
+			return
+		}
+		assert.Equal("text", field.Str)
+		assert.EqualValues(123, field.Int)
+		assert.Equal("intext", field.Inherit.InStr)
+		if !assert.Len(field.ChildSlice, 1) {
+			return
+		}
+		assert.Equal("text", field.ChildSlice[0].Str)
+		assert.EqualValues(123, field.ChildSlice[0].Int)
+	}()
+
+	func() {
+		var field struct {
+			Str     string `json:"str"`
+			Int     int    `json:"int"`
+			Inherit struct {
+				InStr string `json:"instr"`
+			} `reflect:"inherit"`
+			ChildSlice []struct {
+				Str string `json:"str"`
+				Int int    `json:"int"`
+			} `json:"childslice"`
+		}
+		err := reflectField(
+			reflect.ValueOf(&field),
+			reflect.ValueOf(struct {
+				ValStr        string `json:"str"`
+				ValInt        int    `json:"int"`
+				ValInStr      string `json:"instr"`
+				ValChildSlice []struct {
+					ValStr string `json:"str"`
+					ValInt int    `json:"int"`
+				} `json:"childslice"`
+			}{
+				ValStr:   "text",
+				ValInt:   123,
+				ValInStr: "intext",
+				ValChildSlice: []struct {
+					ValStr string `json:"str"`
+					ValInt int    `json:"int"`
+				}{
+					struct {
+						ValStr string `json:"str"`
+						ValInt int    `json:"int"`
+					}{
+						ValStr: "text",
+						ValInt: 123,
+					},
+				},
+			}),
+		)
+		if !assert.NoError(err) {
+			return
+		}
+		assert.Equal("text", field.Str)
+		assert.EqualValues(123, field.Int)
+		assert.Equal("intext", field.Inherit.InStr)
+		if !assert.Len(field.ChildSlice, 1) {
+			return
+		}
+		assert.Equal("text", field.ChildSlice[0].Str)
+		assert.EqualValues(123, field.ChildSlice[0].Int)
+	}()
+
+	func() {
+		var field interface{}
+		err := reflectField(
+			reflect.ValueOf(&field),
+			reflect.ValueOf("text"),
+		)
+		if !assert.NoError(err) {
+			return
+		}
+		assert.Equal("text", field)
+	}()
 }
 
 func Test_ReflectStruct_empty_nothing(t *testing.T) {
@@ -146,14 +398,21 @@ func Test_ReflectStruct_tag_inherit(t *testing.T) {
 	obj := struct {
 		childStruct `reflect:"inherit"`
 		Text        string `json:"text"`
+		StructField struct {
+			FieldText string `json:"fieldText"`
+		} `json:"structField"`
 	}{}
 	err := ReflectStruct(&obj, map[string]interface{}{
 		"text":        "abc",
 		"childstring": "def",
+		"structField": map[string]interface{}{
+			"fieldText": "ghi",
+		},
 	})
 	assert.NoError(err)
 	assert.Equal("abc", obj.Text)
 	assert.Equal("def", obj.ChildString)
+	assert.Equal("ghi", obj.StructField.FieldText)
 }
 
 func Test_ReflectStruct_tag_inherit_pointer(t *testing.T) {
