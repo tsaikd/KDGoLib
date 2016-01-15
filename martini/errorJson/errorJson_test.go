@@ -6,17 +6,21 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tsaikd/KDGoLib/errutil"
 )
 
 func Test_String(t *testing.T) {
 	assert := assert.New(t)
 
-	reserr := newResponseError(404, errors.New("test error"), errors.New("test error 2"))
+	reserr := &responseError{
+		Status:     404,
+		ErrorSlice: errutil.NewErrorSlice(errors.New("test error"), errors.New("test error 2")),
+	}
 	data, err := json.Marshal(reserr)
 	assert.NoError(err)
 	assert.Contains(string(data), "test error")
 
-	unerr := ResponseError{}
+	unerr := responseError{}
 	err = json.Unmarshal(data, &unerr)
 	assert.NoError(err)
 	assert.Equal(404, unerr.Status)

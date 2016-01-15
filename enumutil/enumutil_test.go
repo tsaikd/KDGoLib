@@ -38,7 +38,7 @@ func Test_enum(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
 
-	assert.Equal(2, TestEnumB)
+	assert.EqualValues(2, TestEnumB)
 
 	enumstr := fmt.Sprintf("%s", TestEnumB)
 	assert.Equal("b", enumstr)
