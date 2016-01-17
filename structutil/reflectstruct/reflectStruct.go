@@ -51,7 +51,14 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 	}
 
 	if field.CanAddr() && field.Addr().Type().Implements(jsonUnmarshaler) {
-		return reflectField(field.Addr(), val)
+		switch val.Kind() {
+		case reflect.String:
+			return reflectField(field.Addr(), val)
+		case reflect.Slice:
+			if val.Type() == typeOfBytes {
+				return reflectField(field.Addr(), val)
+			}
+		}
 	}
 
 	// get val real type
@@ -193,6 +200,11 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 			}
 			return
 		case reflect.Struct:
+			if val.Type().AssignableTo(field.Type()) {
+				field.Set(val)
+				return
+			}
+
 			valInfoMap := buildReflectFieldInfo(nil, val)
 			for key, valField := range valInfoMap {
 				fieldInfo, exist := fieldInfoMap[key]
@@ -233,6 +245,11 @@ func buildReflectFieldInfo(fieldInfoMap map[string]reflect.Value, value reflect.
 				childValue = childValue.Elem()
 			}
 			fieldInfoMap = buildReflectFieldInfo(fieldInfoMap, childValue)
+			continue
+		}
+		if field.Name[:1] == strings.ToUpper(field.Name[:1]) {
+			fieldInfoMap[field.Name] = value.Field(i)
+			continue
 		}
 	}
 	return fieldInfoMap

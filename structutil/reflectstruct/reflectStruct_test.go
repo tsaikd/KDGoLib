@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tsaikd/KDGoLib/enumutil"
@@ -27,7 +28,7 @@ func (t *enum) UnmarshalJSON(b []byte) (err error) {
 	return enumFactory.UnmarshalJSON(t, b)
 }
 
-func Test_reflectField(t *testing.T) {
+func Test_reflectField_simple_value(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
 
@@ -126,6 +127,57 @@ func Test_reflectField(t *testing.T) {
 		}
 		assert.True(field)
 	}()
+
+	func() {
+		var field enum
+		err := reflectField(
+			reflect.ValueOf(&field),
+			reflect.ValueOf("test"),
+		)
+		if !assert.NoError(err) {
+			return
+		}
+		assert.Equal(enumTest, field)
+
+		err = reflectField(
+			reflect.ValueOf(&field),
+			reflect.ValueOf(2),
+		)
+		if !assert.NoError(err) {
+			return
+		}
+		assert.EqualValues(2, field)
+	}()
+
+	func() {
+		var field time.Time
+		now := time.Now()
+		err := reflectField(
+			reflect.ValueOf(&field),
+			reflect.ValueOf(now),
+		)
+		if !assert.NoError(err) {
+			return
+		}
+		assert.Equal(now, field)
+	}()
+
+	func() {
+		var field interface{}
+		err := reflectField(
+			reflect.ValueOf(&field),
+			reflect.ValueOf("text"),
+		)
+		if !assert.NoError(err) {
+			return
+		}
+		assert.Equal("text", field)
+	}()
+}
+
+func Test_reflectField_struct(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 
 	func() {
 		var field struct {
@@ -261,18 +313,6 @@ func Test_reflectField(t *testing.T) {
 		}
 		assert.Equal("text", field.ChildSlice[0].Str)
 		assert.EqualValues(123, field.ChildSlice[0].Int)
-	}()
-
-	func() {
-		var field interface{}
-		err := reflectField(
-			reflect.ValueOf(&field),
-			reflect.ValueOf("text"),
-		)
-		if !assert.NoError(err) {
-			return
-		}
-		assert.Equal("text", field)
 	}()
 }
 
