@@ -5,13 +5,24 @@ import "github.com/codegangsta/cli"
 // ModuleFunc module function for execute
 type ModuleFunc func(c *cli.Context) (err error)
 
+// BoolFunc return bool, used for callback function
+type BoolFunc func() bool
+
 // Module contain module detail
 type Module struct {
-	Name       string
-	ModuleFunc ModuleFunc
-	CloseFunc  ModuleFunc
-	Optional   bool
-	Priority   int8 // smaller value means high priority
+	Name         string
+	ModuleFunc   ModuleFunc
+	CloseFunc    ModuleFunc
+	OptionalFunc BoolFunc
+	Priority     int8 // smaller value means high priority
+}
+
+// Optional return module OptionalFunc callback result if exist
+func (t Module) Optional() bool {
+	if t.OptionalFunc != nil {
+		return t.OptionalFunc()
+	}
+	return false
 }
 
 // Modules slice of Module
