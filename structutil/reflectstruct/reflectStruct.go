@@ -13,8 +13,8 @@ import (
 
 // expose errors
 var (
-	ErrorUnknownSourceMapKeyType1       = errutil.ErrorFactory("unknown source map key type: %v")
-	ErrorUnsupportedReflectFieldMethod2 = errutil.ErrorFactory("unsupported reflect field method: %v <- %v")
+	ErrorUnknownSourceMapKeyType1       = errutil.NewFactory("unknown source map key type: %v")
+	ErrorUnsupportedReflectFieldMethod2 = errutil.NewFactory("unsupported reflect field method: %v <- %v")
 )
 
 func unsafeReflectFieldSlice2Slice(field reflect.Value, val reflect.Value) (err error) {

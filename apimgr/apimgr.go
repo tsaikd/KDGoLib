@@ -13,7 +13,7 @@ import (
 
 // errors
 var (
-	ErrorAPIRegisted2 = errutil.ErrorFactory("API already registed for method=%q pattern=%q")
+	ErrorAPIRegisted2 = errutil.NewFactory("API already registed for method=%q pattern=%q")
 )
 
 // Manager manage all registed APIs

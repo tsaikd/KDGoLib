@@ -15,8 +15,7 @@ func IsErrorNoRowsInResultSet(err error) bool {
 }
 
 func IsContainErrorNoRowsInResultSet(err error) bool {
-	es := errutil.NewErrorSlice(err)
-	return es.ContainFunc(IsErrorNoRowsInResultSet)
+	return errutil.ContainErrorFunc(err, IsErrorNoRowsInResultSet)
 }
 
 func IsErrorDuplicateViolateUniqueConstraint(err error) bool {
@@ -36,8 +35,7 @@ func IsErrorDuplicateViolateUniqueConstraint(err error) bool {
 }
 
 func IsContainErrorDuplicateViolateUniqueConstraint(err error) bool {
-	es := errutil.NewErrorSlice(err)
-	return es.ContainFunc(IsErrorDuplicateViolateUniqueConstraint)
+	return errutil.ContainErrorFunc(err, IsErrorDuplicateViolateUniqueConstraint)
 }
 
 func IsErrorTsquerySyntax(err error) bool {
@@ -57,6 +55,5 @@ func IsErrorTsquerySyntax(err error) bool {
 }
 
 func IsContainErrorTsquerySyntax(err error) bool {
-	es := errutil.NewErrorSlice(err)
-	return es.ContainFunc(IsErrorTsquerySyntax)
+	return errutil.ContainErrorFunc(err, IsErrorTsquerySyntax)
 }

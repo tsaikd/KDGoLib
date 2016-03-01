@@ -7,8 +7,11 @@ import (
 
 var (
 	commands = map[string]cli.Command{}
+)
 
-	ErrorCommandDefined1 = errutil.ErrorFactory("command %s defined")
+// errors
+var (
+	ErrorCommandDefined1 = errutil.NewFactory("command %s defined")
 )
 
 func AddCommand(command cli.Command) cli.Command {

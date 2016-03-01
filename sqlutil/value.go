@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	ErrorUnsupportedScanType1 = errutil.ErrorFactory("unsupported scan type: %v")
-	ErrorInvalidObjType1      = errutil.ErrorFactory("invalid obj type: %T")
-	ErrorNoValueFound1        = errutil.ErrorFactory("no value found for key %v")
+	ErrorUnsupportedScanType1 = errutil.NewFactory("unsupported scan type: %v")
+	ErrorInvalidObjType1      = errutil.NewFactory("invalid obj type: %T")
+	ErrorNoValueFound1        = errutil.NewFactory("no value found for key %v")
 )
 
 // Set obj to value's JSON representation

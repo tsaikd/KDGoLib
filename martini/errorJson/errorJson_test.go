@@ -5,27 +5,32 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/KDGoLib/errutil"
 )
 
 func Test_String(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
+	require.NotNil(require)
 
 	reserr := &responseError{
-		Status:     404,
-		ErrorSlice: errutil.NewErrorSlice(errors.New("test error"), errors.New("test error 2")),
+		Status: 404,
+		ErrorJSON: errutil.NewJSON(errutil.NewErrors(
+			errors.New("test error 1"),
+			errors.New("test error 2"),
+		)),
 	}
 	data, err := json.Marshal(reserr)
-	assert.NoError(err)
-	assert.Contains(string(data), "test error")
+	require.NoError(err)
+	require.Contains(string(data), `404`)
+	require.Contains(string(data), `"test error 1"`)
+	require.Contains(string(data), `"test error 2"`)
+	require.Contains(string(data), `errorJson_test.go:21`)
 
-	unerr := responseError{}
-	err = json.Unmarshal(data, &unerr)
-	assert.NoError(err)
-	assert.Equal(404, unerr.Status)
-
-	undata, err := json.Marshal(unerr)
-	assert.NoError(err)
-	assert.Equal(string(undata), string(data))
+	store := map[string]interface{}{}
+	err = json.Unmarshal(data, &store)
+	require.NoError(err)
+	require.Equal(float64(404), store["status"])
+	require.Equal("test error 1", store["error"])
+	require.Contains(store["errorpath"], `errorJson_test.go:21`)
 }

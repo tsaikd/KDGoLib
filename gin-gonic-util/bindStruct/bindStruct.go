@@ -16,7 +16,7 @@ import (
 
 // errors
 var (
-	ErrorInjectorNotFound = errutil.ErrorFactory("injector not found, bindStruct require gin-injector middleware")
+	ErrorInjectorNotFound = errutil.NewFactory("injector not found, bindStruct require gin-injector middleware")
 )
 
 // Config for binding

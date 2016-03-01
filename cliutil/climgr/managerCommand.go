@@ -8,7 +8,7 @@ import (
 
 // errors
 var (
-	ErrorCommandRegisted1 = errutil.ErrorFactory("Command already registed: %q")
+	ErrorCommandRegisted1 = errutil.NewFactory("Command already registed: %q")
 )
 
 // AddCommand add command to manager

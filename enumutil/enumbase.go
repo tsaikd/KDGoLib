@@ -9,8 +9,9 @@ import (
 	"github.com/tsaikd/KDGoLib/sqlutil"
 )
 
+// errors
 var (
-	ErrorEnumString1 = errutil.ErrorFactory("convert string to enum failed: %v")
+	ErrorEnumString1 = errutil.NewFactory("convert string to enum failed: %v")
 )
 
 type EnumString interface {

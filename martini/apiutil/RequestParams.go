@@ -8,7 +8,7 @@ import (
 
 // errors
 var (
-	ErrorRequestParamNotFound1 = errutil.ErrorFactory("param %q not found in request map")
+	ErrorRequestParamNotFound1 = errutil.NewFactory("param %q not found in request map")
 )
 
 // RequestParam contain param name and type info

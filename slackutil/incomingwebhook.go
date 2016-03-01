@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	ErrorSlackUnexpectedResponseBody1   = errutil.ErrorFactory("unexpected slack response body: %v")
-	ErrorSlackUnexpectedResponseStatus1 = errutil.ErrorFactory("unexpected slack response status: %v")
+	ErrorSlackUnexpectedResponseBody1   = errutil.NewFactory("unexpected slack response body: %v")
+	ErrorSlackUnexpectedResponseStatus1 = errutil.NewFactory("unexpected slack response status: %v")
 )
 
 type IncomingWebHook struct {

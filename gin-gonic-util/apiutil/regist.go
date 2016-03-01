@@ -12,7 +12,7 @@ import (
 
 // errors
 var (
-	ErrorAPIRegisted2 = errutil.ErrorFactory("API already registed for method=%q path=%1")
+	ErrorAPIRegisted2 = errutil.NewFactory("API already registed for method=%q path=%1")
 )
 
 var (

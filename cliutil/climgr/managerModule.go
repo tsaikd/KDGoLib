@@ -8,8 +8,8 @@ import (
 
 // errors
 var (
-	ErrorModuleRegisted1 = errutil.ErrorFactory("Module already registed: %q")
-	ErrorModuleNotFound1 = errutil.ErrorFactory("Module not found: %q")
+	ErrorModuleRegisted1 = errutil.NewFactory("Module already registed: %q")
+	ErrorModuleNotFound1 = errutil.NewFactory("Module not found: %q")
 )
 
 // AddModule add module to manager

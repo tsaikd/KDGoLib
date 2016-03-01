@@ -11,7 +11,7 @@ import (
 
 // errors
 var (
-	ErrorInjectorNotFound = errutil.ErrorFactory("injector not found, remember to use Injector middleware ?")
+	ErrorInjectorNotFound = errutil.NewFactory("injector not found, remember to use Injector middleware ?")
 )
 
 var (

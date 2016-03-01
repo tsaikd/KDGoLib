@@ -19,7 +19,7 @@ func RenderErrorJSON(c *gin.Context) {
 
 		c.JSON(
 			http.StatusNotFound,
-			errutil.NewErrorSlice(errs...),
+			errutil.NewErrors(errs...),
 		)
 	}
 }

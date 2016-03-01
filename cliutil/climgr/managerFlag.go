@@ -7,7 +7,7 @@ import (
 
 // errors
 var (
-	ErrorFlagRegisted1 = errutil.ErrorFactory("Flag already registed: %q")
+	ErrorFlagRegisted1 = errutil.NewFactory("Flag already registed: %q")
 )
 
 // MustAddBoolFlag add bool flag to manager, panic if error

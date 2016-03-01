@@ -7,8 +7,11 @@ import (
 
 var (
 	flags = map[string]cli.Flag{}
+)
 
-	ErrorFlagDefined1 = errutil.ErrorFactory("flag %s defined")
+// errors
+var (
+	ErrorFlagDefined1 = errutil.NewFactory("flag %s defined")
 )
 
 func AddBoolFlag(cliflag cli.BoolFlag) cli.BoolFlag {

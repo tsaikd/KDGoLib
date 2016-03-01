@@ -1,71 +1,68 @@
 package errutil
 
-import (
-	"fmt"
-	"path/filepath"
-	"runtime"
-)
+import "fmt"
 
-type ErrorWrapper struct {
+// ErrorFactory is used for create or check ErrorObject
+type ErrorFactory interface {
+	Error() string
+
+	New(err error, params ...interface{}) ErrorObject
+	Match(err error) bool
+	In(err error) bool
+}
+
+type errorFactory struct {
 	errtext string
-	debug   bool
 }
 
-func (t *ErrorWrapper) ErrorText(errtext string) *ErrorWrapper {
-	t.errtext = errtext
-	return t
-}
-
-func (t *ErrorWrapper) Debug(debug bool) *ErrorWrapper {
-	t.debug = debug
-	return t
-}
-
-func (t *ErrorWrapper) New(err error, params ...interface{}) error {
-	var errtext string
-	if t.debug {
-		_, file, line, ok := runtime.Caller(1)
-		if !ok {
-			file = "???"
-			line = 0
-		}
-
-		file = filepath.Base(file)
-		filelinetext := fmt.Sprintf("%s:%d", file, line)
-
-		if t.errtext == "" {
-			errtext = filelinetext
-		} else {
-			errtext = filelinetext + " " + t.errtext
-		}
-	} else {
-		errtext = t.errtext
+// NewFactory return new NewFactory instance
+func NewFactory(errtext string) ErrorFactory {
+	return &errorFactory{
+		errtext: errtext,
 	}
-	curerr := fmt.Errorf(errtext, params...)
-	errorslice := NewErrorSlice(curerr, err)
-	errorslice.wrapper = t
-	return errorslice
 }
 
-func (t *ErrorWrapper) Match(err error) bool {
-	errorslice := castErrorSlice(err)
-	if errorslice == nil {
+func (t errorFactory) Error() string {
+	return t.errtext
+}
+
+func (t *errorFactory) New(parent error, params ...interface{}) ErrorObject {
+	errobj := castErrorObject(t, 0, fmt.Errorf(t.errtext, params...))
+	errobj.SetParent(castErrorObject(nil, 0, parent))
+	return errobj
+}
+
+func (t *errorFactory) Match(err error) bool {
+	if t == nil || err == nil {
 		return false
 	}
 
-	return errorslice.wrapper == t
+	errcomp := castErrorObject(nil, 1, err)
+	if errcomp == nil {
+		return false
+	}
+
+	return errcomp.Factory() == t
 }
 
-func ErrorFactory(errtext string) *ErrorWrapper {
-	return &ErrorWrapper{
-		errtext: errtext,
-		debug:   false,
+func (t *errorFactory) In(err error) bool {
+	if t == nil || err == nil {
+		return false
 	}
+
+	exist := false
+
+	if errtmp := WalkErrors(castErrorObject(nil, 1, err), func(errcomp ErrorObject) (stop bool, walkerr error) {
+		if errcomp.Factory() == t {
+			exist = true
+			return true, nil
+		}
+		return false, nil
+	}); errtmp != nil {
+		panic(errtmp)
+	}
+
+	return exist
 }
 
-func ErrorFactoryDebug(errtext string) *ErrorWrapper {
-	return &ErrorWrapper{
-		errtext: errtext,
-		debug:   true,
-	}
-}
+var _ ErrorFactory = (*errorFactory)(nil)
