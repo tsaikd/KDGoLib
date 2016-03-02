@@ -1,25 +1,18 @@
-package httputil
+package webutil
 
 import (
 	"crypto/tls"
-	"io/ioutil"
 	"net/http"
+
+	"github.com/tsaikd/KDGoLib/errutil"
 )
 
-func ReadResponse(resp *http.Response) (body string, err error) {
-	var (
-		data []byte
-	)
+// errors
+var (
+	ErrorPing = errutil.NewFactory("ping %q return unexpect status code %q")
+)
 
-	defer resp.Body.Close()
-	if data, err = ioutil.ReadAll(resp.Body); err != nil {
-		return
-	}
-
-	body = string(data)
-	return
-}
-
+// PingIgnoreCertificate ping url but ignore https certification check
 func PingIgnoreCertificate(surl string) (err error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -30,7 +23,7 @@ func PingIgnoreCertificate(surl string) (err error) {
 		return
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
-		return &ErrorPingFailed{surl, resp.StatusCode}
+		return ErrorPing.New(nil, surl, resp.StatusCode)
 	}
 	return
 }

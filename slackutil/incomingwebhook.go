@@ -6,9 +6,10 @@ import (
 	"net/http"
 
 	"github.com/tsaikd/KDGoLib/errutil"
-	"github.com/tsaikd/KDGoLib/httputil"
+	"github.com/tsaikd/KDGoLib/webutil"
 )
 
+// errors
 var (
 	ErrorSlackUnexpectedResponseBody1   = errutil.NewFactory("unexpected slack response body: %v")
 	ErrorSlackUnexpectedResponseStatus1 = errutil.NewFactory("unexpected slack response status: %v")
@@ -30,13 +31,13 @@ func (t *IncomingWebHook) SendMessage(message IncomingWebHookMessage) (err error
 		return
 	}
 
-	body, err := httputil.ReadResponse(res)
-	if err != nil {
-		return
+	if err = webutil.NewResponseError(res); err != nil {
+		return ErrorSlackUnexpectedResponseStatus1.New(err, res.StatusCode)
 	}
 
-	if res.StatusCode < 200 || res.StatusCode >= 400 {
-		return ErrorSlackUnexpectedResponseStatus1.New(nil, res.StatusCode)
+	body, err := webutil.ReadResponse(res)
+	if err != nil {
+		return
 	}
 
 	if body != "ok" {
