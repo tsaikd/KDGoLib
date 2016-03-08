@@ -5,9 +5,31 @@ import (
 	"strings"
 )
 
+// RuntimeCallerFilter use to filter runtime.Caller result
+type RuntimeCallerFilter func(file string, line int) bool
+
 // RuntimeCaller wrap runtime.Caller(), find until go source file
-func RuntimeCaller(skip int) (file string, line int, ok bool) {
-	skip += 2
+func RuntimeCaller(skip int, filters ...RuntimeCallerFilter) (file string, line int, ok bool) {
+	filters = append([]RuntimeCallerFilter{
+		func(file string, line int) bool {
+			return strings.HasSuffix(file, ".go")
+		},
+	}, filters...)
+	return RuntimeCallerCustomFilter(skip+1, filters...)
+}
+
+func filterAll(file string, line int, filters ...RuntimeCallerFilter) bool {
+	for _, filter := range filters {
+		if !filter(file, line) {
+			return false
+		}
+	}
+	return true
+}
+
+// RuntimeCallerCustomFilter wrap runtime.Caller(), find until all filters match
+func RuntimeCallerCustomFilter(skip int, filters ...RuntimeCallerFilter) (file string, line int, ok bool) {
+	skip++
 
 	for {
 		_, file, line, ok = runtime.Caller(skip)
@@ -15,7 +37,7 @@ func RuntimeCaller(skip int) (file string, line int, ok bool) {
 			return
 		}
 
-		if strings.HasSuffix(file, ".go") {
+		if filterAll(file, line, filters...) {
 			return
 		}
 

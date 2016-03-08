@@ -22,6 +22,6 @@ func Test_ConsoleLogFormatter(t *testing.T) {
 	}
 
 	logger.Println("TEST OUTPUT")
-	assert.Contains(outputBuffer.String(), "ConsoleLogFormatter_test.go:")
+	assert.Contains(outputBuffer.String(), "ConsoleLogFormatter_test.go:24")
 	assert.Contains(outputBuffer.String(), "TEST OUTPUT")
 }

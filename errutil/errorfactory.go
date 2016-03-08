@@ -27,8 +27,8 @@ func (t errorFactory) Error() string {
 }
 
 func (t *errorFactory) New(parent error, params ...interface{}) ErrorObject {
-	errobj := castErrorObject(t, 0, fmt.Errorf(t.errtext, params...))
-	errobj.SetParent(castErrorObject(nil, 0, parent))
+	errobj := castErrorObject(t, 1, fmt.Errorf(t.errtext, params...))
+	errobj.SetParent(castErrorObject(nil, 1, parent))
 	return errobj
 }
 

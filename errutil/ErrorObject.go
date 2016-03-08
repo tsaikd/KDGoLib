@@ -27,7 +27,7 @@ func newErrors(skip int, errs ...error) ErrorObject {
 	var errcomp ErrorObject
 	var errtmp ErrorObject
 	for i, size := 0, len(errs); i < size; i++ {
-		errtmp = castErrorObject(nil, 1, errs[i])
+		errtmp = castErrorObject(nil, skip+1, errs[i])
 		if errtmp == nil {
 			continue
 		}
