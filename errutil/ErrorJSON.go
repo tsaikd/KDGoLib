@@ -11,11 +11,11 @@ type ErrorJSON struct {
 
 // NewJSON create ErrorJSON
 func NewJSON(err error) *ErrorJSON {
-	if err == nil {
-		return nil
-	}
+	return newJSON(1, err)
+}
 
-	errobj := castErrorObject(nil, 1, err)
+func newJSON(skip int, err error) *ErrorJSON {
+	errobj := castErrorObject(nil, skip+1, err)
 	if errobj == nil {
 		return nil
 	}

@@ -64,7 +64,7 @@ func Test_ErrorObject_chain_basic(t *testing.T) {
 	require.Equal(3, Length(err3))
 	data, err := json.Marshal(err3)
 	require.NoError(err)
-	require.Equal(`{"error":"err3","errors":["err3","err2","err1"]}`, string(data))
+	require.Contains(string(data), `"error":"err3","errors":["err3","err2","err1"]`)
 }
 
 func Test_ErrorObject_chain_duplicate1(t *testing.T) {
@@ -80,7 +80,7 @@ func Test_ErrorObject_chain_duplicate1(t *testing.T) {
 	require.Equal(3, Length(err4))
 	data, err := MarshalJSON(err4)
 	require.NoError(err)
-	require.Equal(`{"error":"err4","errors":["err4","err2","err1"]}`, string(data))
+	require.Contains(string(data), `"error":"err4","errors":["err4","err2","err1"]`)
 }
 
 func Test_ErrorObject_chain_duplicate2(t *testing.T) {
