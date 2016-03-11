@@ -35,8 +35,17 @@ func (t *Manager) GetCommands() (results []cli.Command) {
 	return
 }
 
-// WrapAction wrap action, handle return error
-func WrapAction(action func(context *cli.Context) error, logger logutil.StdLogger) func(context *cli.Context) {
+// WrapAction wrap action, handle return error with errutil.Trace()
+func WrapAction(action func(context *cli.Context) error) func(context *cli.Context) {
+	return func(context *cli.Context) {
+		if err := action(context); err != nil {
+			errutil.Trace(err)
+		}
+	}
+}
+
+// WrapActionLogger wrap action, handle return error with logger
+func WrapActionLogger(action func(context *cli.Context) error, logger logutil.StdLogger) func(context *cli.Context) {
 	return func(context *cli.Context) {
 		if err := action(context); err != nil {
 			logger.Fatalln(err)
