@@ -24,6 +24,10 @@ var enumFactory = enumutil.NewEnumFactory().
 	Add(enumTest, "test").
 	Build()
 
+func (t enum) String() string {
+	return enumFactory.String(t)
+}
+
 func (t *enum) UnmarshalJSON(b []byte) (err error) {
 	return enumFactory.UnmarshalJSON(t, b)
 }

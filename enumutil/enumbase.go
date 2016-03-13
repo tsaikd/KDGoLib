@@ -19,11 +19,11 @@ type EnumString interface {
 }
 
 type enumBase struct {
-	mape2s map[interface{}]string
+	mape2s map[EnumString]string
 	maps2e map[string]interface{}
 }
 
-func (t enumBase) String(enum interface{}) string {
+func (t enumBase) String(enum EnumString) string {
 	return t.mape2s[enum]
 }
 
@@ -65,4 +65,14 @@ func (t enumBase) Value(enum EnumString) (v driver.Value, err error) {
 func (t enumBase) IsEnumString(str string) bool {
 	_, ok := t.maps2e[str]
 	return ok
+}
+
+func (t enumBase) Each(walker func(enum interface{}) (stop bool, err error)) error {
+	for _, enum := range t.maps2e {
+		stop, err := walker(enum)
+		if stop || err != nil {
+			return err
+		}
+	}
+	return nil
 }
