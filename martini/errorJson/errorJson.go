@@ -37,7 +37,7 @@ func RenderErrorJSON(render render.Render, status int, err error, errs ...error)
 	errConcat := append([]error{err}, errs...)
 	reserr := responseError{
 		Status:    status,
-		ErrorJSON: errutil.NewJSON(errutil.NewErrors(errConcat...)),
+		ErrorJSON: errutil.NewJSON(errutil.NewErrorsSkip(1, errConcat...)),
 	}
 	render.JSON(status, reserr)
 }

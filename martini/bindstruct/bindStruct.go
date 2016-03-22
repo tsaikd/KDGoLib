@@ -9,8 +9,9 @@ import (
 
 	"github.com/asaskevich/govalidator"
 	"github.com/go-martini/martini"
+	"github.com/martini-contrib/render"
 	"github.com/tsaikd/KDGoLib/errutil"
-	"github.com/tsaikd/KDGoLib/logutil"
+	"github.com/tsaikd/KDGoLib/martini/errorJson"
 	"github.com/tsaikd/KDGoLib/structutil/reflectstruct"
 	"github.com/tsaikd/KDGoLib/structutil/trimstructspace"
 )
@@ -46,11 +47,11 @@ func BindStruct(obj interface{}) martini.Handler {
 
 // BindStructWithConfig martini handler for bind struct
 func BindStructWithConfig(obj interface{}, config BindConfig) martini.Handler {
-	return func(context martini.Context, req *http.Request, params martini.Params) (err error) {
+	return func(context martini.Context, req *http.Request, params martini.Params, r render.Render) (err error) {
 		// handle return error because martini will ignore
 		defer func() {
 			if err != nil {
-				logutil.GetLevelLogger(context).Errorln(err)
+				errorJson.RenderErrorJSON(r, 404, errutil.NewErrorsSkip(1, err))
 			}
 		}()
 

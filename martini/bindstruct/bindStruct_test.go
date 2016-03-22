@@ -9,8 +9,7 @@ import (
 	"testing"
 
 	"github.com/go-martini/martini"
-	"github.com/martini-contrib/render"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/KDGoLib/martini/errorJson"
 )
 
@@ -30,10 +29,10 @@ type apiReqRequiredStruct struct {
 }
 
 func Test_binding(t *testing.T) {
-	assert := assert.New(t)
+	require := require.New(t)
+	require.NotNil(require)
 
 	m := martini.Classic()
-	m.Use(render.Renderer())
 	errorJson.BindMartini(m.Martini)
 
 	func() {
@@ -42,58 +41,60 @@ func Test_binding(t *testing.T) {
 			runapi = true
 		})
 		req, err := http.NewRequest("POST", "/testsimple", nil)
-		assert.NoError(err)
+		require.NoError(err)
 		httpRecorder := httptest.NewRecorder()
 		m.ServeHTTP(httpRecorder, req)
-		assert.Empty(httpRecorder.Body.String())
-		assert.True(runapi)
+		require.Equal(200, httpRecorder.Code)
+		require.Empty(httpRecorder.Body.String())
+		require.True(runapi)
 	}()
 
 	func() {
 		runapi := false
 		m.Any("/testquery", BindStruct(apiReq{}), func(areq apiReq) {
-			assert.Equal("parama", areq.ParamA)
-			assert.EqualValues(123, areq.ParamB)
-			assert.True(areq.ParamD)
-			assert.False(areq.ParamE)
+			require.Equal("parama", areq.ParamA)
+			require.Equal(int64(123), areq.ParamB)
+			require.True(areq.ParamD)
+			require.False(areq.ParamE)
 			runapi = true
 		})
 		req, err := http.NewRequest("POST", "/testquery?a=parama&b=123&d=true", nil)
-		assert.NoError(err)
+		require.NoError(err)
 		httpRecorder := httptest.NewRecorder()
 		m.ServeHTTP(httpRecorder, req)
-		assert.Empty(httpRecorder.Body.String())
-		assert.True(runapi)
+		require.Equal(200, httpRecorder.Code)
+		require.Empty(httpRecorder.Body.String())
+		require.True(runapi)
 	}()
 
 	func() {
 		runapi := false
 		m.Any("/testparam/:a/:b/:d", BindStruct(apiReq{}), func(areq apiReq) {
-			assert.Equal("parama", areq.ParamA)
-			assert.EqualValues(123, areq.ParamB)
-			assert.True(areq.ParamD)
-			assert.False(areq.ParamE)
+			require.Equal("parama", areq.ParamA)
+			require.Equal(int64(123), areq.ParamB)
+			require.True(areq.ParamD)
+			require.False(areq.ParamE)
 			runapi = true
 		})
 		req, err := http.NewRequest("POST", "/testparam/parama/123/true", nil)
-		assert.NoError(err)
+		require.NoError(err)
 		httpRecorder := httptest.NewRecorder()
 		m.ServeHTTP(httpRecorder, req)
-		assert.Empty(httpRecorder.Body.String())
-		assert.True(runapi)
+		require.Equal(200, httpRecorder.Code)
+		require.Empty(httpRecorder.Body.String())
+		require.True(runapi)
 	}()
 
 	func() {
 		runapi := false
 		m.Any("/testjsonbody", BindStruct(apiReq{}), func(areq apiReq) {
-			assert.Equal("parama", areq.ParamA)
-			assert.EqualValues(123, areq.ParamB)
-			assert.Equal("paramc", areq.ParamC)
-			assert.True(areq.ParamD)
-			assert.False(areq.ParamE)
-			if assert.Len(areq.ChildSlice, 1) {
-				assert.Equal(areq.ChildSlice[0].Str, "text")
-			}
+			require.Equal("parama", areq.ParamA)
+			require.Equal(int64(123), areq.ParamB)
+			require.Equal("paramc", areq.ParamC)
+			require.True(areq.ParamD)
+			require.False(areq.ParamE)
+			require.Len(areq.ChildSlice, 1)
+			require.Equal(areq.ChildSlice[0].Str, "text")
 			runapi = true
 		})
 		body, err := json.Marshal(map[string]interface{}{
@@ -106,14 +107,15 @@ func Test_binding(t *testing.T) {
 				},
 			},
 		})
-		assert.NoError(err)
+		require.NoError(err)
 		req, err := http.NewRequest("POST", "/testjsonbody?c=paramc", bytes.NewReader(body))
-		assert.NoError(err)
+		require.NoError(err)
 		req.Header.Set("Content-Type", "application/json")
 		httpRecorder := httptest.NewRecorder()
 		m.ServeHTTP(httpRecorder, req)
-		assert.Empty(httpRecorder.Body.String())
-		assert.True(runapi)
+		require.Equal(200, httpRecorder.Code)
+		require.Empty(httpRecorder.Body.String())
+		require.True(runapi)
 	}()
 
 	func() {
@@ -122,11 +124,12 @@ func Test_binding(t *testing.T) {
 			runapi = true
 		})
 		req, err := http.NewRequest("POST", "/teststructrequired", nil)
-		assert.NoError(err)
+		require.NoError(err)
 		req.Header.Set("Content-Type", "application/json")
 		httpRecorder := httptest.NewRecorder()
 		m.ServeHTTP(httpRecorder, req)
-		assert.NotEmpty(httpRecorder.Body.String())
-		assert.False(runapi)
+		require.Equal(404, httpRecorder.Code)
+		require.Contains(httpRecorder.Body.String(), "bindStruct.go:97")
+		require.False(runapi)
 	}()
 }
