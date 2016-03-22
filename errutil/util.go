@@ -1,10 +1,6 @@
 package errutil
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
-	"os"
 	"runtime"
 	"strings"
 )
@@ -65,37 +61,4 @@ func ContainErrorFunc(err error, equalFunc func(error) bool) bool {
 	}
 
 	return contain
-}
-
-// Trace error stack, output to os.Stderr
-func Trace(err error) {
-	trace(1, err, os.Stderr)
-}
-
-// TraceWriter error stack, output to writer
-func TraceWriter(err error, writer io.Writer) {
-	trace(1, err, writer)
-}
-
-func trace(skip int, err error, writer io.Writer) {
-	errjson := newJSON(skip+1, err)
-	if errjson == nil {
-		return
-	}
-
-	data, err := json.Marshal(errjson)
-	if err != nil {
-		panic(err)
-	}
-	if len(data) < 1 {
-		return
-	}
-
-	if writer == nil {
-		writer = os.Stderr
-	}
-
-	if _, werr := fmt.Fprintln(writer, string(data)); writer != os.Stderr && werr != nil {
-		fmt.Fprintln(os.Stderr, werr, string(data))
-	}
 }
