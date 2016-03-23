@@ -1,9 +1,6 @@
 package errutil
 
-import (
-	"errors"
-	"path/filepath"
-)
+import "errors"
 
 // errors
 var (
@@ -47,8 +44,9 @@ func NewErrorsSkip(skip int, errs ...error) ErrorObject {
 
 // ErrorObject is a rich error interface
 type ErrorObject interface {
-	Path() string
-	Filename() string
+	PackageName() string
+	FuncName() string
+	FileName() string
 	Line() int
 	Error() string
 	Factory() ErrorFactory
@@ -57,12 +55,13 @@ type ErrorObject interface {
 }
 
 type errorObject struct {
-	path     string
-	filename string
-	line     int
-	errtext  string
-	factory  ErrorFactory
-	parent   ErrorObject
+	packageName string
+	fileName    string
+	funcName    string
+	line        int
+	errtext     string
+	factory     ErrorFactory
+	parent      ErrorObject
 }
 
 func castErrorObject(factory ErrorFactory, skip int, err error) ErrorObject {
@@ -78,30 +77,37 @@ func castErrorObject(factory ErrorFactory, skip int, err error) ErrorObject {
 	case ErrorObject:
 		return err.(ErrorObject)
 	default:
-		file, line, _ := RuntimeCaller(skip + 1)
-		filename := filepath.Base(file)
+		packageName, fileName, funcName, line, _ := RuntimeCaller(skip + 1)
 		return &errorObject{
-			path:     file,
-			filename: filename,
-			line:     line,
-			errtext:  err.Error(),
-			factory:  factory,
+			packageName: packageName,
+			fileName:    fileName,
+			funcName:    funcName,
+			line:        line,
+			errtext:     err.Error(),
+			factory:     factory,
 		}
 	}
 }
 
-func (t *errorObject) Path() string {
+func (t *errorObject) PackageName() string {
 	if t == nil {
 		return ""
 	}
-	return t.path
+	return t.packageName
 }
 
-func (t *errorObject) Filename() string {
+func (t *errorObject) FileName() string {
 	if t == nil {
 		return ""
 	}
-	return t.filename
+	return t.fileName
+}
+
+func (t *errorObject) FuncName() string {
+	if t == nil {
+		return ""
+	}
+	return t.funcName
 }
 
 func (t *errorObject) Line() int {

@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"path/filepath"
 	"strings"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/errutil"
 )
 
+// flags
 const (
 	Llongfile  = log.Llongfile
 	Lshortfile = log.Lshortfile
@@ -19,10 +19,7 @@ const (
 	LstdFlags  = Ltime | Lshortfile | Llevel
 )
 
-var (
-	isTerminal = logrus.IsTerminal()
-)
-
+// ConsoleLogFormatter suitable formatter for console
 type ConsoleLogFormatter struct {
 	TimestampFormat string
 	Flag            int
@@ -36,10 +33,11 @@ func addspace(text string, addspaceflag bool) (string, bool) {
 	return text, true
 }
 
-func filterLogrusRuntimeCaller(file string, line int) bool {
-	return !strings.Contains(file, "github.com/Sirupsen/logrus")
+func filterLogrusRuntimeCaller(packageName string, fileName string, funcName string, line int) bool {
+	return !strings.Contains(packageName, "github.com/Sirupsen/logrus")
 }
 
+// Format output logrus entry
 func (t *ConsoleLogFormatter) Format(entry *logrus.Entry) (data []byte, err error) {
 	buffer := bytes.Buffer{}
 	addspaceflag := false
@@ -63,12 +61,13 @@ func (t *ConsoleLogFormatter) Format(entry *logrus.Entry) (data []byte, err erro
 
 	if t.Flag&(Lshortfile|Llongfile) != 0 {
 		var filelinetext string
-		if file, line, ok := errutil.RuntimeCaller(1+t.CallerOffset, filterLogrusRuntimeCaller); ok {
+		if packageName, fileName, _, line, ok := errutil.RuntimeCaller(1+t.CallerOffset, filterLogrusRuntimeCaller); ok {
 			if t.Flag&Lshortfile != 0 {
-				file = filepath.Base(file)
+				filelinetext = fmt.Sprintf("%s:%d", fileName, line)
+			} else {
+				filelinetext = fmt.Sprintf("%s/%s:%d", packageName, fileName, line)
 			}
 
-			filelinetext = fmt.Sprintf("%s:%d", file, line)
 			filelinetext, addspaceflag = addspace(filelinetext, addspaceflag)
 		}
 

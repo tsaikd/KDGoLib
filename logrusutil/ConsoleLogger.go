@@ -6,6 +6,7 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
+// NewConsoleLogger create new Logger with ConsoleLogFormatter
 func NewConsoleLogger() *logrus.Logger {
 	return &logrus.Logger{
 		Out:       os.Stdout,

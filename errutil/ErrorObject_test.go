@@ -14,7 +14,7 @@ func Test_ErrorObject_New(t *testing.T) {
 
 	err := New("new error")
 	require.Error(err)
-	require.Equal("ErrorObject_test.go", err.Filename())
+	require.Equal("ErrorObject_test.go", err.FileName())
 	require.Equal(15, err.Line())
 	require.Equal("new error", err.Error())
 	require.Nil(err.Factory())
@@ -28,7 +28,7 @@ func Test_ErrorObject_NewErrors(t *testing.T) {
 
 	err := NewErrors(errors.New("new errors"))
 	require.Error(err)
-	require.Equal("ErrorObject_test.go", err.Filename())
+	require.Equal("ErrorObject_test.go", err.FileName())
 	require.Equal(29, err.Line())
 	require.Equal("new errors", err.Error())
 	require.Nil(err.Factory())

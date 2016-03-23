@@ -29,7 +29,7 @@ func newJSON(skip int, err error) *ErrorJSON {
 	}
 
 	return &ErrorJSON{
-		ErrorPath: errobj.Path() + ":" + strconv.Itoa(errobj.Line()),
+		ErrorPath: errobj.PackageName() + "/" + errobj.FileName() + ":" + strconv.Itoa(errobj.Line()),
 		ErrorMsg:  errobj.Error(),
 		ErrorMsgs: errors,
 	}
