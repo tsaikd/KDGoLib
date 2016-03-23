@@ -15,15 +15,16 @@ func New(text string, errs ...error) ErrorObject {
 	if text != "" {
 		errs = append([]error{errors.New(text)}, errs...)
 	}
-	return newErrors(1, errs...)
+	return NewErrorsSkip(1, errs...)
 }
 
 // NewErrors return ErrorObject that contains all input errors
 func NewErrors(errs ...error) ErrorObject {
-	return newErrors(1, errs...)
+	return NewErrorsSkip(1, errs...)
 }
 
-func newErrors(skip int, errs ...error) ErrorObject {
+// NewErrorsSkip return ErrorObject, skip function call
+func NewErrorsSkip(skip int, errs ...error) ErrorObject {
 	var errcomp ErrorObject
 	var errtmp ErrorObject
 	for i, size := 0, len(errs); i < size; i++ {
