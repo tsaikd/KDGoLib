@@ -16,6 +16,17 @@ type ReturnError struct {
 	Error  error
 }
 
+// AddError add error to ReturnError
+func (t *ReturnError) AddError(err error) {
+	if err == nil {
+		return
+	}
+	t.Error = errutil.NewErrorsSkip(1, err, t.Error)
+	if t.Status == 0 {
+		t.Status = 404
+	}
+}
+
 type responseError struct {
 	Status int `json:"status,omitempty"`
 	*errutil.ErrorJSON
@@ -71,14 +82,10 @@ func returnErrorHandler() martini.ReturnHandler {
 			return
 		}
 		if isError(responseVal) {
-			if returnError.Error == nil {
-				returnError.Error = responseVal.Interface().(error)
-			} else {
-				returnError.Error = errutil.NewErrors(responseVal.Interface().(error), returnError.Error)
-			}
-			if returnError.Status == 0 {
-				returnError.Status = 404
-			}
+			returnError.AddError(responseVal.Interface().(error))
+		}
+
+		if returnError.Error != nil {
 			RenderErrorJSON(render, returnError.Status, returnError.Error)
 			return
 		}
