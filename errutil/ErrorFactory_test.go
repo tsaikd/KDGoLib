@@ -67,3 +67,13 @@ func Test_ErrorFactory_chain_with_origin_error(t *testing.T) {
 	require.Nil(err.Parent().Parent())
 	require.Nil(err.Parent().Factory())
 }
+
+func Test_ErrorFactory_sorted(t *testing.T) {
+	require := require.New(t)
+	require.NotNil(require)
+
+	factories := AllSortedNamedFactories()
+	require.Len(factories, 7)
+	require.Equal(ErrorWalkLoop, factories[0])
+	require.Equal(testFactory, factories[6])
+}

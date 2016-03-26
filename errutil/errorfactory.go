@@ -1,10 +1,14 @@
 package errutil
 
-import "fmt"
+import (
+	"fmt"
+	"sort"
+)
 
 // ErrorFactory is used for create or check ErrorObject
 type ErrorFactory interface {
 	Error() string
+	Name() string
 
 	New(err error, params ...interface{}) ErrorObject
 	Match(err error) bool
@@ -13,17 +17,49 @@ type ErrorFactory interface {
 
 type errorFactory struct {
 	errtext string
+	name    string
 }
 
-// NewFactory return new NewFactory instance
+var namedFactories = map[string]ErrorFactory{}
+
+// AllNamedFactories return all named factories
+func AllNamedFactories() map[string]ErrorFactory {
+	return namedFactories
+}
+
+// AllSortedNamedFactories return all sorted named factories
+// NOTE: this is slow for sorting in runtime
+func AllSortedNamedFactories() []ErrorFactory {
+	sorter := newSorter(namedFactories)
+	sort.Sort(sorter)
+	return sorter.data
+}
+
+// NewFactory return new ErrorFactory instance
 func NewFactory(errtext string) ErrorFactory {
-	return &errorFactory{
-		errtext: errtext,
+	packageName, _, _, _, _ := RuntimeCaller(1)
+	return NewNamedFactory(packageName+"->"+errtext, errtext)
+}
+
+// NewNamedFactory return new ErrorFactory instance with factory name, panic if name duplicated
+func NewNamedFactory(name string, errtext string) ErrorFactory {
+	if _, ok := namedFactories[name]; ok {
+		panic(fmt.Errorf("error factory name duplicated: %q", name))
 	}
+	factory := &errorFactory{
+		errtext: errtext,
+		name:    name,
+	}
+	namedFactories[name] = factory
+	return factory
 }
 
 func (t errorFactory) Error() string {
 	return t.errtext
+}
+
+func (t errorFactory) Name() string {
+	return t.name
 }
 
 func (t *errorFactory) New(parent error, params ...interface{}) ErrorObject {

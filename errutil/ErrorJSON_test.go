@@ -7,20 +7,33 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var testFactory = NewNamedFactory("testFactory", "test factory outside")
+
 func Test_JSONStruct(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	jsondata := NewJSON(NewErrors(
-		New("test error 1"),
-		New("test error 2"),
-	))
+	factory := NewFactory("test error 1")
+	jsondata := NewJSON(factory.New(New("test error 2")))
 
 	data, err := json.Marshal(jsondata)
 	require.NoError(err)
 	require.Contains(string(data), `"test error 1"`)
 	require.Contains(string(data), `"test error 2"`)
-	require.Contains(string(data), `ErrorJSON_test.go:15`)
+	require.Contains(string(data), `errutil/ErrorJSON_test.go:17`)
+}
+
+func Test_JSONStruct_outside(t *testing.T) {
+	require := require.New(t)
+	require.NotNil(require)
+
+	jsondata := NewJSON(testFactory.New(New("test error 2")))
+
+	data, err := json.Marshal(jsondata)
+	require.NoError(err)
+	require.Contains(string(data), `"test factory outside"`)
+	require.Contains(string(data), `"test error 2"`)
+	require.Contains(string(data), `"testFactory"`)
 }
 
 func Test_JSONStruct_inherit(t *testing.T) {
@@ -45,5 +58,4 @@ func Test_JSONStruct_inherit(t *testing.T) {
 	require.Contains(string(data), `"test field"`)
 	require.Contains(string(data), `"test error 1"`)
 	require.Contains(string(data), `"test error 2"`)
-	require.Contains(string(data), `ErrorJSON_test.go:31`)
 }
