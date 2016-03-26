@@ -82,21 +82,9 @@ func (t *Manager) GetMethodPatternMap() map[string]Definition {
 // GetSortedAPIsByPkgPath return all registed APIs sorted by package path
 // NOTE: this is slow for sorting in runtime
 func (t *Manager) GetSortedAPIsByPkgPath() (results []Definition) {
-	pkgpathMap := map[string]Definition{}
-	keys := []string{}
-
-	for _, api := range t.apiMethodPatternMap {
-		pkgpath := getPackagePath(reflect.ValueOf(api.Request))
-		key := pkgpath + " " + t.GetMethodPatternKey(t, api)
-		pkgpathMap[key] = api
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	for _, key := range keys {
-		results = append(results, pkgpathMap[key])
-	}
-
-	return results
+	sorter := newSorter(t)
+	sort.Sort(sorter)
+	return sorter.apis
 }
 
 func getMethodPatternKey(manager *Manager, api Definition) string {
@@ -111,6 +99,9 @@ func nameGenerator(manager *Manager, api Definition) (name string, fullname stri
 	if lenRelpaths > 0 {
 		name += camelcase(relpaths[lenRelpaths-1])
 		for i := 0; i < lenRelpaths-1; i++ {
+			if relpaths[i] == ".." {
+				continue
+			}
 			name += camelcase(relpaths[i])
 		}
 	}
