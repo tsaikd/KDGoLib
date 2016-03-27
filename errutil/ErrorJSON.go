@@ -1,13 +1,16 @@
 package errutil
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+)
 
 // ErrorJSON is a helper struct for display error
 type ErrorJSON struct {
 	ErrorPath      string          `json:"errorpath,omitempty"`
 	ErrorMsg       string          `json:"error,omitempty"`
 	ErrorMsgs      []string        `json:"errors,omitempty"`
-	ErrorFactories map[string]bool `json:"errfacs,omitempty"`
+	ErrorFactories map[string]bool `json:"errfac,omitempty"`
 }
 
 // NewJSON create ErrorJSON
@@ -27,7 +30,9 @@ func newJSON(skip int, err error) *ErrorJSON {
 		errors = append(errors, errcomp.Error())
 		factory := errcomp.Factory()
 		if factory != nil {
-			facs[factory.Name()] = true
+			if !strings.Contains(factory.Name(), "->") {
+				facs[factory.Name()] = true
+			}
 		}
 		return false, nil
 	}); err != nil {
