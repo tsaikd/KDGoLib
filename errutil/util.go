@@ -6,16 +6,23 @@ import (
 	"strings"
 )
 
+var runtimeCallerFilters = []RuntimeCallerFilter{
+	func(packageName string, fileName string, funcName string, line int) bool {
+		return strings.HasSuffix(fileName, ".go")
+	},
+}
+
+// AddRuntimeCallerFilter add filter for RuntimeCaller()
+func AddRuntimeCallerFilter(filters ...RuntimeCallerFilter) {
+	runtimeCallerFilters = append(runtimeCallerFilters, filters...)
+}
+
 // RuntimeCallerFilter use to filter runtime.Caller result
 type RuntimeCallerFilter func(packageName string, fileName string, funcName string, line int) bool
 
 // RuntimeCaller wrap runtime.Caller(), find until go source file
 func RuntimeCaller(skip int, filters ...RuntimeCallerFilter) (packageName string, fileName string, funcName string, line int, ok bool) {
-	filters = append([]RuntimeCallerFilter{
-		func(packageName string, fileName string, funcName string, line int) bool {
-			return strings.HasSuffix(fileName, ".go")
-		},
-	}, filters...)
+	filters = append(runtimeCallerFilters, filters...)
 	return RuntimeCallerCustomFilter(skip+1, filters...)
 }
 
