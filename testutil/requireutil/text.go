@@ -1,4 +1,4 @@
-package apitest
+package requireutil
 
 import (
 	"testing"
@@ -6,8 +6,8 @@ import (
 	"github.com/pmezard/go-difflib/difflib"
 )
 
-// AssertText if expected != actual, show error of diff detail
-func AssertText(t *testing.T, expected string, actual string) {
+// RequireText if expected != actual, show error of diff detail
+func RequireText(t *testing.T, expected string, actual string) {
 	if expected == actual {
 		return
 	}
@@ -21,5 +21,5 @@ func AssertText(t *testing.T, expected string, actual string) {
 		Eol:      "\n",
 	}
 	result, _ := difflib.GetContextDiffString(diff)
-	t.Error(result)
+	t.Fatal(result)
 }
