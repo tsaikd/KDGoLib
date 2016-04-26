@@ -35,9 +35,11 @@ type responseError struct {
 // RenderErrorJSON render error in json format
 func RenderErrorJSON(render render.Render, status int, err error, errs ...error) {
 	errConcat := append([]error{err}, errs...)
+	errjson, err := errutil.NewJSON(errutil.NewErrorsSkip(1, errConcat...))
+	errutil.Trace(err)
 	reserr := responseError{
 		Status:    status,
-		ErrorJSON: errutil.NewJSON(errutil.NewErrorsSkip(1, errConcat...)),
+		ErrorJSON: errjson,
 	}
 	render.JSON(status, reserr)
 }

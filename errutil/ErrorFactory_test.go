@@ -44,7 +44,7 @@ func Test_ErrorFactory_chain(t *testing.T) {
 	err1 := factory1.New(nil)
 	err2 := factory2.New(err1)
 	require.Error(err2)
-	require.Equal("factory error chain 2", err2.Error())
+	require.Equal("factory error chain 2; factory error chain 1", err2.Error())
 	require.True(factory2.Match(err2))
 	require.False(factory1.Match(err2))
 	require.True(factory1.In(err2))
@@ -58,7 +58,7 @@ func Test_ErrorFactory_chain_with_origin_error(t *testing.T) {
 
 	err := factory.New(errors.New("origin error"))
 	require.Error(err)
-	require.Equal("factory error chain", err.Error())
+	require.Equal("factory error chain; origin error", err.Error())
 	require.True(factory.Match(err))
 	require.NotNil(err.Parent())
 	require.Equal("origin error", err.Parent().Error())

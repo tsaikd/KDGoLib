@@ -1,6 +1,8 @@
 package errutil
 
 import (
+	"bytes"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,18 +11,24 @@ import (
 type invalidFormatter struct {
 }
 
-func (t *invalidFormatter) Format(errin error) (err error) {
-	return New("invalid formatter")
+func (t *invalidFormatter) Format(errin error) (errtext string, err error) {
+	return "", New("invalid formatter")
 }
 
 func Test_Trace(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	formatter := NewBufferErrorFormatter()
-	require.NotNil(formatter)
+	formatter := defaultFormatter
+	traceOutput := defaultTraceOutput
+	defer func() {
+		defaultFormatter = formatter
+		defaultTraceOutput = traceOutput
+	}()
 
-	SetDefaultFormatter(formatter)
+	buffer := &bytes.Buffer{}
+	SetDefaultFormatter(NewJSONFormatter())
+	SetDefaultTraceOutput(buffer)
 
 	errchild1 := New("test error 1")
 	errchild2 := New("test error 2")
@@ -28,10 +36,10 @@ func Test_Trace(t *testing.T) {
 
 	Trace(errtest)
 
-	errtext := formatter.String()
+	errtext := buffer.String()
 	require.Contains(errtext, `"test error 1"`)
 	require.Contains(errtext, `"test error 2"`)
-	require.Contains(errtext, `trace_test.go:27`)
+	require.Contains(errtext, `trace_test.go:35`)
 }
 
 func Test_TracePanic(t *testing.T) {
@@ -42,6 +50,7 @@ func Test_TracePanic(t *testing.T) {
 	require.NotNil(formatter)
 
 	SetDefaultFormatter(formatter)
+	SetDefaultTraceOutput(os.Stderr)
 
 	errtest := NewErrors(
 		New("test error 1"),

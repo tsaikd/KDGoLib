@@ -75,22 +75,11 @@ func AddParent(errobj ErrorObject, parent ErrorObject) error {
 	return nil
 }
 
-// MarshalJSON marshal ErrorObject to json
-func MarshalJSON(errobj ErrorObject) ([]byte, error) {
-	if errobj == nil {
-		return []byte(""), nil
+// MarshalJSON marshal error to json
+func MarshalJSON(errobj error) ([]byte, error) {
+	errjson, err := newJSON(1, errobj)
+	if errjson == nil || err != nil {
+		return []byte(""), err
 	}
-
-	errors := []string{}
-	if err := WalkErrors(errobj, func(errcomp ErrorObject) (stop bool, walkerr error) {
-		errors = append(errors, errcomp.Error())
-		return false, nil
-	}); err != nil {
-		return nil, err
-	}
-
-	return json.Marshal(map[string]interface{}{
-		"error":  errobj.Error(),
-		"errors": errors,
-	})
+	return json.Marshal(errjson)
 }

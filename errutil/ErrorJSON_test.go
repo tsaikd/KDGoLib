@@ -14,7 +14,9 @@ func Test_JSONStruct(t *testing.T) {
 	require.NotNil(require)
 
 	factory := NewFactory("test error 1")
-	jsondata := NewJSON(factory.New(New("test error 2")))
+	jsondata, err := NewJSON(factory.New(New("test error 2")))
+	require.NoError(err)
+	require.NotNil(jsondata)
 
 	data, err := json.Marshal(jsondata)
 	require.NoError(err)
@@ -27,7 +29,9 @@ func Test_JSONStruct_outside(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	jsondata := NewJSON(testFactory.New(New("test error 2")))
+	jsondata, err := NewJSON(testFactory.New(New("test error 2")))
+	require.NoError(err)
+	require.NotNil(jsondata)
 
 	data, err := json.Marshal(jsondata)
 	require.NoError(err)
@@ -40,10 +44,12 @@ func Test_JSONStruct_inherit(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
-	jsondata := NewJSON(NewErrors(
+	jsondata, err := NewJSON(NewErrors(
 		New("test error 1"),
 		New("test error 2"),
 	))
+	require.NoError(err)
+	require.NotNil(jsondata)
 
 	teststruct := struct {
 		*ErrorJSON

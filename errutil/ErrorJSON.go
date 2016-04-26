@@ -14,20 +14,20 @@ type ErrorJSON struct {
 }
 
 // NewJSON create ErrorJSON
-func NewJSON(err error) *ErrorJSON {
+func NewJSON(err error) (*ErrorJSON, error) {
 	return newJSON(1, err)
 }
 
-func newJSON(skip int, err error) *ErrorJSON {
+func newJSON(skip int, err error) (*ErrorJSON, error) {
 	errobj := castErrorObject(nil, skip+1, err)
 	if errobj == nil {
-		return nil
+		return nil, nil
 	}
 
 	errors := []string{}
 	facs := map[string]bool{}
 	if err := WalkErrors(errobj, func(errcomp ErrorObject) (stop bool, walkerr error) {
-		errors = append(errors, errcomp.Error())
+		errors = append(errors, getErrorText(errcomp))
 		factory := errcomp.Factory()
 		if factory != nil {
 			if !strings.Contains(factory.Name(), "->") {
@@ -36,15 +36,15 @@ func newJSON(skip int, err error) *ErrorJSON {
 		}
 		return false, nil
 	}); err != nil {
-		return nil
+		return nil, err
 	}
 
 	return &ErrorJSON{
 		ErrorPath:      errobj.PackageName() + "/" + errobj.FileName() + ":" + strconv.Itoa(errobj.Line()),
-		ErrorMsg:       errobj.Error(),
+		ErrorMsg:       getErrorText(errobj),
 		ErrorMsgs:      errors,
 		ErrorFactories: facs,
-	}
+	}, nil
 }
 
 func (t *ErrorJSON) Error() string {

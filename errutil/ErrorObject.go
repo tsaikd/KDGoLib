@@ -89,6 +89,14 @@ func castErrorObject(factory ErrorFactory, skip int, err error) ErrorObject {
 	}
 }
 
+func getErrorText(errin error) string {
+	errobj, ok := errin.(*errorObject)
+	if ok {
+		return errobj.errtext
+	}
+	return errin.Error()
+}
+
 func (t *errorObject) PackageName() string {
 	if t == nil {
 		return ""
@@ -118,7 +126,8 @@ func (t *errorObject) Line() int {
 }
 
 func (t errorObject) Error() string {
-	return t.errtext
+	errtext, _ := defaultFormatter.Format(&t)
+	return errtext
 }
 
 func (t *errorObject) Factory() ErrorFactory {
