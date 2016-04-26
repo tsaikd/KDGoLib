@@ -16,11 +16,16 @@ type ConsoleFormatter struct {
 
 // Format error object
 func (t *ConsoleFormatter) Format(errin error) (errtext string, err error) {
+	return t.FormatSkip(errin, 1)
+}
+
+// FormatSkip trace error line and format object
+func (t *ConsoleFormatter) FormatSkip(errin error, skip int) (errtext string, err error) {
 	if t.seperator == "" {
 		return getErrorText(errin), nil
 	}
 
-	errobj := castErrorObject(nil, 1, errin)
+	errobj := castErrorObject(nil, skip+1, errin)
 	if errobj == nil {
 		return "", nil
 	}
