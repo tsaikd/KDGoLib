@@ -42,6 +42,55 @@ func Test_Trace(t *testing.T) {
 	require.Contains(errtext, `trace_test.go:35`)
 }
 
+func Test_TraceWrap(t *testing.T) {
+	require := require.New(t)
+	require.NotNil(require)
+
+	formatter := defaultFormatter
+	traceOutput := defaultTraceOutput
+	defer func() {
+		defaultFormatter = formatter
+		defaultTraceOutput = traceOutput
+	}()
+
+	buffer := &bytes.Buffer{}
+	SetDefaultFormatter(NewJSONFormatter())
+	SetDefaultTraceOutput(buffer)
+
+	errchild1 := New("test error 1")
+	errchild2 := New("test error 2")
+	errtest := New("test error", errchild1, errchild2)
+
+	TraceWrap(errtest, New("test error wrapper"))
+
+	errtext := buffer.String()
+	require.Contains(errtext, `"test error wrapper"`)
+	require.Contains(errtext, `"test error"`)
+	require.Contains(errtext, `"test error 1"`)
+	require.Contains(errtext, `"test error 2"`)
+}
+
+func Test_TraceWrapNil(t *testing.T) {
+	require := require.New(t)
+	require.NotNil(require)
+
+	formatter := defaultFormatter
+	traceOutput := defaultTraceOutput
+	defer func() {
+		defaultFormatter = formatter
+		defaultTraceOutput = traceOutput
+	}()
+
+	buffer := &bytes.Buffer{}
+	SetDefaultFormatter(NewJSONFormatter())
+	SetDefaultTraceOutput(buffer)
+
+	TraceWrap(nil, New("test error wrapper"))
+
+	errtext := buffer.String()
+	require.Zero(errtext)
+}
+
 func Test_TracePanic(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)

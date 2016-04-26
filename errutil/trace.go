@@ -10,6 +10,14 @@ func Trace(err error) {
 	TraceSkip(err, 1)
 }
 
+// TraceWrap trace err and wrap with wraperr only if err != nil
+func TraceWrap(err error, wraperr error) {
+	if err != nil {
+		errs := NewErrorsSkip(1, wraperr, err)
+		TraceSkip(errs, 1)
+	}
+}
+
 // TraceSkip error stack, output to default ErrorFormatter, skip n function calls, panic if output error
 func TraceSkip(err error, skip int) {
 	var errtext string
