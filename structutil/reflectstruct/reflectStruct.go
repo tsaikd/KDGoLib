@@ -222,6 +222,11 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 		return
 	case reflect.Map:
 		switch val.Kind() {
+		case reflect.Map:
+			if !val.IsNil() {
+				field.Set(val)
+			}
+			return
 		case reflect.Struct:
 			return reflectFieldStruct2Map(field, val)
 		}
