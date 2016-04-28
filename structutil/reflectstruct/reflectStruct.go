@@ -87,12 +87,12 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 		switch val.Kind() {
 		case reflect.String:
 			valstr := val.String()
-			v, err := strconv.ParseInt(valstr, 0, 64)
-			if err != nil {
-				return err
+			var v int64
+			if v, err = strconv.ParseInt(valstr, 0, 64); err != nil {
+				return
 			}
 			field.SetInt(v)
-			return err
+			return
 		case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
 			field.SetInt(val.Int())
 			return
@@ -111,12 +111,12 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 		switch val.Kind() {
 		case reflect.String:
 			valstr := val.String()
-			v, err := strconv.ParseFloat(valstr, 64)
-			if err != nil {
-				return err
+			var v float64
+			if v, err = strconv.ParseFloat(valstr, 64); err != nil {
+				return
 			}
 			field.SetFloat(v)
-			return err
+			return
 		case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
 			field.SetFloat(float64(val.Int()))
 			return
@@ -135,12 +135,12 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 		switch val.Kind() {
 		case reflect.String:
 			valstr := val.String()
-			v, err := govalidator.ToBoolean(valstr)
-			if err != nil {
-				return err
+			var v bool
+			if v, err = govalidator.ToBoolean(valstr); err != nil {
+				return
 			}
 			field.SetBool(v)
-			return nil
+			return
 		case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
 			field.SetBool(val.Int() > 0)
 			return
@@ -220,6 +220,11 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 	case reflect.Interface:
 		field.Set(val)
 		return
+	case reflect.Map:
+		switch val.Kind() {
+		case reflect.Struct:
+			return reflectFieldStruct2Map(field, val)
+		}
 	}
 
 	return ErrorUnsupportedReflectFieldMethod2.New(nil, field.Kind(), val.Kind())
@@ -232,8 +237,11 @@ func buildReflectFieldInfo(fieldInfoMap map[string]reflect.Value, value reflect.
 	for i := 0; i < value.NumField(); i++ {
 		field := value.Type().Field(i)
 		if tag := field.Tag.Get("json"); tag != "" {
-			if tagvals := strings.Split(tag, ","); len(tagvals) > 0 && tagvals[0] != "-" {
-				fieldInfoMap[tagvals[0]] = value.Field(i)
+			tagvals := strings.Split(tag, ",")
+			if len(tagvals) > 0 {
+				if tagvals[0] != "-" {
+					fieldInfoMap[tagvals[0]] = value.Field(i)
+				}
 				continue
 			}
 		}
