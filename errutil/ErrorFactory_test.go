@@ -19,6 +19,12 @@ func Test_ErrorFactory(t *testing.T) {
 	require.Equal("factory error", err.Error())
 	require.True(factory.Match(err))
 	require.Equal("ErrorFactory_test.go", err.FileName())
+
+	switch FactoryOf(err) {
+	case factory:
+	default:
+		t.Fatal("Invalid factory switch case")
+	}
 }
 
 func Test_ErrorFactory_with_param(t *testing.T) {
@@ -63,7 +69,7 @@ func Test_ErrorFactory_chain_with_origin_error(t *testing.T) {
 	require.NotNil(err.Parent())
 	require.Equal("origin error", err.Parent().Error())
 	require.Equal("ErrorFactory_test.go", err.Parent().FileName())
-	require.Equal(59, err.Parent().Line())
+	require.Equal(65, err.Parent().Line())
 	require.Nil(err.Parent().Parent())
 	require.Nil(err.Parent().Factory())
 }

@@ -54,6 +54,15 @@ func NewNamedFactory(name string, errtext string) ErrorFactory {
 	return factory
 }
 
+// FactoryOf return factory of error, return nil if not factory found
+func FactoryOf(err error) ErrorFactory {
+	errobj := castErrorObject(nil, 1, err)
+	if errobj == nil {
+		return nil
+	}
+	return errobj.Factory()
+}
+
 func (t errorFactory) Error() string {
 	return t.errtext
 }
