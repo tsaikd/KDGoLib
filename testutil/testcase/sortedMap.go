@@ -61,6 +61,16 @@ func (t *SortedMap) IsExists(name string) bool {
 	return exist
 }
 
+// Last return last element, return nil if len == 0
+func (t *SortedMap) Last() interface{} {
+	if t.Len() < 1 {
+		return nil
+	}
+
+	key := t.datakey[t.Len()-1]
+	return t.datamap[key]
+}
+
 // Shift an element, return nil if len == 0
 func (t *SortedMap) Shift() interface{} {
 	if t.Len() < 1 {

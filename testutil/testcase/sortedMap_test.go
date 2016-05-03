@@ -11,9 +11,13 @@ func Test_SortedMap(t *testing.T) {
 	require.NotNil(require)
 
 	sortedMap := SortedMap{}
+	require.Nil(sortedMap.Last())
+	require.Nil(sortedMap.Shift())
+
 	sortedMap.Set("b", 2)
 	sortedMap.Set("a", 1)
 	sortedMap.Set("c", 3)
+	require.Equal(3, sortedMap.Last())
 	require.True(sortedMap.IsExists("a"))
 	require.False(sortedMap.IsExists("d"))
 
