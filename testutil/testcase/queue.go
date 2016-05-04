@@ -1,15 +1,26 @@
 package testcase
 
-import "sort"
+// Queue is a data struct support map and slice feature
+type Queue interface {
+	Get(name string) interface{}
+	Set(name string, provider interface{})
+	Remove(name string)
+	IsExists(name string) bool
+	Last() interface{}
+	Shift() interface{}
+	Walk(callback func(name string, element interface{}) (stop bool))
+	Keys() []string
+	Len() int
+}
 
-// SortedMap is a map and can be sorted
-type SortedMap struct {
+// QueueType implement Queue
+type QueueType struct {
 	datamap map[string]interface{}
 	datakey []string
 }
 
 // Get return value by key
-func (t *SortedMap) Get(name string) interface{} {
+func (t *QueueType) Get(name string) interface{} {
 	if t.datamap == nil {
 		panic("provider " + name + " not found")
 	}
@@ -17,7 +28,7 @@ func (t *SortedMap) Get(name string) interface{} {
 }
 
 // Set value to map by key
-func (t *SortedMap) Set(name string, provider interface{}) {
+func (t *QueueType) Set(name string, provider interface{}) {
 	if t.datamap == nil {
 		t.datamap = map[string]interface{}{}
 		t.datakey = []string{}
@@ -30,7 +41,7 @@ func (t *SortedMap) Set(name string, provider interface{}) {
 }
 
 // Remove key from map
-func (t *SortedMap) Remove(name string) {
+func (t *QueueType) Remove(name string) {
 	if t.datamap == nil {
 		return
 	}
@@ -53,7 +64,7 @@ func (t *SortedMap) Remove(name string) {
 }
 
 // IsExists return true if name exists in map
-func (t *SortedMap) IsExists(name string) bool {
+func (t *QueueType) IsExists(name string) bool {
 	if t.datamap == nil {
 		return false
 	}
@@ -62,7 +73,7 @@ func (t *SortedMap) IsExists(name string) bool {
 }
 
 // Last return last element, return nil if len == 0
-func (t *SortedMap) Last() interface{} {
+func (t *QueueType) Last() interface{} {
 	if t.Len() < 1 {
 		return nil
 	}
@@ -72,7 +83,7 @@ func (t *SortedMap) Last() interface{} {
 }
 
 // Shift an element, return nil if len == 0
-func (t *SortedMap) Shift() interface{} {
+func (t *QueueType) Shift() interface{} {
 	if t.Len() < 1 {
 		return nil
 	}
@@ -85,7 +96,7 @@ func (t *SortedMap) Shift() interface{} {
 }
 
 // Walk all data for callback
-func (t *SortedMap) Walk(callback func(name string, element interface{}) (stop bool)) {
+func (t *QueueType) Walk(callback func(name string, element interface{}) (stop bool)) {
 	for _, key := range t.datakey {
 		element := t.datamap[key]
 		if callback(key, element) {
@@ -94,27 +105,12 @@ func (t *SortedMap) Walk(callback func(name string, element interface{}) (stop b
 	}
 }
 
-// Sort by keys
-func (t *SortedMap) Sort() {
-	sort.Sort(t)
-}
-
 // Keys return all keys
-func (t *SortedMap) Keys() []string {
+func (t *QueueType) Keys() []string {
 	return t.datakey
 }
 
-// Len length of map, used for sort
-func (t *SortedMap) Len() int {
+// Len length of map
+func (t *QueueType) Len() int {
 	return len(t.datamap)
-}
-
-// Less compare key, used for sort
-func (t *SortedMap) Less(i, j int) bool {
-	return t.datakey[i] < t.datakey[j]
-}
-
-// Swap key position, used for sort
-func (t *SortedMap) Swap(i, j int) {
-	t.datakey[i], t.datakey[j] = t.datakey[j], t.datakey[i]
 }

@@ -15,11 +15,13 @@ func Test_TestCase(t *testing.T) {
 
 	testBuffer := bytes.NewBuffer(nil)
 	generalSetup := func(c Context, t Case) (value interface{}) {
-		testBuffer.WriteString("setup " + t.Name() + "\n")
-		return nil
+		_, err := testBuffer.WriteString("setup " + t.Name() + "\n")
+		require.NoError(err)
+		return t
 	}
 	generalTearDown := func(c Context, t Case, value interface{}) {
-		testBuffer.WriteString("teardown " + t.Name() + "\n")
+		_, err := testBuffer.WriteString("teardown " + t.Name() + "\n")
+		require.NoError(err)
 	}
 	register := NewContext(nil)
 
@@ -83,38 +85,27 @@ func Test_TestCase(t *testing.T) {
 	)
 	require.NotNil(caseMix2)
 
-	register.StartTest(t, func(c Context, testcase Case) {
-		testBuffer.WriteString("testing " + testcase.Name() + "\n")
-	}, nil)
+	register.StartTest(t)
 
 	expectedBuffer := strings.TrimSpace(`
-testing caseMix1
 setup caseRoot1
-setup caseRoot1Child2
-setup caseMix1
-teardown caseMix1
-testing caseMix2
-setup caseRoot2
 setup caseRoot1Child1
-setup caseMix2
-teardown caseMix2
-testing caseRoot1
-testing caseRoot1Child1
-teardown caseRoot1Child1
-testing caseRoot1Child2
-teardown caseRoot1Child2
-teardown caseRoot1
-testing caseRoot2
-teardown caseRoot2
-testing caseRoot3
+setup caseRoot1Child2
+setup caseRoot2
 setup caseRoot3
-testing caseRoot3Child1
 setup caseRoot3Child1
-testing caseRoot3Child1Child1
 setup caseRoot3Child1Child1
 teardown caseRoot3Child1Child1
 teardown caseRoot3Child1
 teardown caseRoot3
+setup caseMix1
+teardown caseMix1
+setup caseMix2
+teardown caseMix2
+teardown caseRoot2
+teardown caseRoot1Child2
+teardown caseRoot1Child1
+teardown caseRoot1
 	`) + "\n"
 	requireutil.RequireText(t, expectedBuffer, testBuffer.String())
 }
