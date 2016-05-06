@@ -8,6 +8,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/errutil"
+	"github.com/tsaikd/KDGoLib/runtimecaller"
 )
 
 // flags
@@ -33,8 +34,8 @@ func addspace(text string, addspaceflag bool) (string, bool) {
 	return text, true
 }
 
-func filterLogrusRuntimeCaller(packageName string, fileName string, funcName string, line int) bool {
-	return !strings.Contains(packageName, "github.com/Sirupsen/logrus")
+func filterLogrusRuntimeCaller(callinfo runtimecaller.CallInfo) (valid bool, stop bool) {
+	return !strings.Contains(callinfo.PackageName, "github.com/Sirupsen/logrus"), false
 }
 
 // Format output logrus entry
@@ -61,11 +62,11 @@ func (t *ConsoleLogFormatter) Format(entry *logrus.Entry) (data []byte, err erro
 
 	if t.Flag&(Lshortfile|Llongfile) != 0 {
 		var filelinetext string
-		if packageName, fileName, _, line, ok := errutil.RuntimeCaller(1+t.CallerOffset, filterLogrusRuntimeCaller); ok {
+		if callinfo, ok := errutil.RuntimeCaller(1+t.CallerOffset, filterLogrusRuntimeCaller); ok {
 			if t.Flag&Lshortfile != 0 {
-				filelinetext = fmt.Sprintf("%s:%d", fileName, line)
+				filelinetext = fmt.Sprintf("%s:%d", callinfo.FileName, callinfo.Line)
 			} else {
-				filelinetext = fmt.Sprintf("%s/%s:%d", packageName, fileName, line)
+				filelinetext = fmt.Sprintf("%s/%s:%d", callinfo.PackageName, callinfo.FileName, callinfo.Line)
 			}
 
 			filelinetext, addspaceflag = addspace(filelinetext, addspaceflag)

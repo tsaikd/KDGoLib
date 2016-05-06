@@ -77,12 +77,12 @@ func castErrorObject(factory ErrorFactory, skip int, err error) ErrorObject {
 	case ErrorObject:
 		return err.(ErrorObject)
 	default:
-		packageName, fileName, funcName, line, _ := RuntimeCaller(skip + 1)
+		callinfo, _ := RuntimeCaller(skip + 1)
 		return &errorObject{
-			packageName: packageName,
-			fileName:    fileName,
-			funcName:    funcName,
-			line:        line,
+			packageName: callinfo.PackageName,
+			fileName:    callinfo.FileName,
+			funcName:    callinfo.FuncName,
+			line:        callinfo.Line,
 			errtext:     err.Error(),
 			factory:     factory,
 		}

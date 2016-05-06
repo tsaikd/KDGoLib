@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/KDGoLib/logrusutil"
 )
 
 func Test_ConsoleLogFormatter(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
 
 	outputBuffer := &bytes.Buffer{}
 	logger := &logrus.Logger{
@@ -22,6 +22,6 @@ func Test_ConsoleLogFormatter(t *testing.T) {
 	}
 
 	logger.Println("TEST OUTPUT")
-	assert.Contains(outputBuffer.String(), "ConsoleLogFormatter_test.go:24")
-	assert.Contains(outputBuffer.String(), "TEST OUTPUT")
+	require.Contains(outputBuffer.String(), "ConsoleLogFormatter_test.go:24")
+	require.Contains(outputBuffer.String(), "TEST OUTPUT")
 }
