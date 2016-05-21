@@ -3,6 +3,7 @@ package errutil
 import (
 	"bytes"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -39,7 +40,8 @@ func Test_Trace(t *testing.T) {
 	errtext := buffer.String()
 	require.Contains(errtext, `"test error 1"`)
 	require.Contains(errtext, `"test error 2"`)
-	require.Contains(errtext, `trace_test.go:35`)
+	require.Contains(errtext, `trace_test.go:36`)
+	require.True(strings.HasSuffix(errtext, "\n"))
 }
 
 func Test_TraceWrap(t *testing.T) {
@@ -68,6 +70,7 @@ func Test_TraceWrap(t *testing.T) {
 	require.Contains(errtext, `"test error"`)
 	require.Contains(errtext, `"test error 1"`)
 	require.Contains(errtext, `"test error 2"`)
+	require.True(strings.HasSuffix(errtext, "\n"))
 }
 
 func Test_TraceWrapNil(t *testing.T) {

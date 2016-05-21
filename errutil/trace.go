@@ -3,6 +3,7 @@ package errutil
 import (
 	"io"
 	"os"
+	"strings"
 )
 
 // Trace error stack, output to default ErrorFormatter, panic if output error
@@ -30,6 +31,9 @@ func TraceSkip(err error, skip int) {
 		if errtext, errfmt = defaultFormatter.Format(err); errfmt != nil {
 			panic(errfmt)
 		}
+	}
+	if !strings.HasSuffix(errtext, "\n") {
+		errtext += "\n"
 	}
 	if _, errfmt = defaultTraceOutput.Write([]byte(errtext)); errfmt != nil {
 		panic(errfmt)
