@@ -15,9 +15,40 @@ var Name = "cmder"
 // Usage of application
 var Usage string
 
+// BeforeActions list all before actions
+var BeforeActions = []cli.ActionFunc{}
+
+// Before application main action
+var Before = func(c *cli.Context) (err error) {
+	for _, action := range BeforeActions {
+		if err = action(c); err != nil {
+			return
+		}
+	}
+	return
+}
+
 // Action application main action
 var Action = func(c *cli.Context) (err error) {
+	args := c.Args()
+	if args.Present() {
+		return cli.ShowCommandHelp(c, args.First())
+	}
+
 	cli.ShowAppHelp(c)
+	return nil
+}
+
+// AfterActions list all after actions
+var AfterActions = []cli.ActionFunc{}
+
+// After application main action
+var After = func(c *cli.Context) (err error) {
+	for _, action := range AfterActions {
+		if err = action(c); err != nil {
+			return
+		}
+	}
 	return
 }
 
@@ -36,7 +67,9 @@ func Main() {
 	app.Name = Name
 	app.Usage = Usage
 	app.Version = version.String()
+	app.Before = Before
 	app.Action = Action
+	app.After = After
 	app.Flags = Flags
 
 	if !DisableVersionCommand {
@@ -68,6 +101,18 @@ func WrapAction(action cli.ActionFunc) cli.ActionFunc {
 			}
 		}
 		return
+	}
+}
+
+// WrapMainAction wrap main action with default error handler and command helper
+func WrapMainAction(action cli.ActionFunc) cli.ActionFunc {
+	return func(c *cli.Context) (err error) {
+		args := c.Args()
+		if args.Present() {
+			return cli.ShowCommandHelp(c, args.First())
+		}
+
+		return WrapAction(action)(c)
 	}
 }
 
