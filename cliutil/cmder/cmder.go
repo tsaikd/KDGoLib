@@ -17,6 +17,7 @@ var Usage string
 
 // Action application main action
 var Action = func(c *cli.Context) (err error) {
+	cli.ShowAppHelp(c)
 	return
 }
 
