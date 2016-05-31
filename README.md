@@ -3,6 +3,11 @@ KDGoLib
 
 [![Build Status](https://travis-ci.org/tsaikd/KDGoLib.svg?branch=master)](https://travis-ci.org/tsaikd/KDGoLib)
 
-## errutil package
+## packages
 
-* https://milkr.io/tsaikd/Go-lang-error-handling
+* [enumutil](enumutil)
+	* Enum creation helper
+* [errutil](errutil)
+	* An error handling helper
+* [version](version)
+	* Golang application general version helper
