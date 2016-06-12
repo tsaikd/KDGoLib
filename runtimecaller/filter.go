@@ -13,13 +13,13 @@ var FilterCommons = []Filter{
 
 // FilterOnlyGoSource filter CallInfo FileName end with ".go"
 func FilterOnlyGoSource(callinfo CallInfo) (valid bool, stop bool) {
-	filename := strings.ToLower(callinfo.FileName)
+	filename := strings.ToLower(callinfo.FileName())
 	return strings.HasSuffix(filename, ".go"), false
 }
 
 // FilterStopRuntimeCallerPackage filter CallInfo to stop after reach KDGoLib/runtimecaller package
 func FilterStopRuntimeCallerPackage(callinfo CallInfo) (valid bool, stop bool) {
-	if callinfo.PackageName == "github.com/tsaikd/KDGoLib/runtimecaller" {
+	if callinfo.PackageName() == "github.com/tsaikd/KDGoLib/runtimecaller" {
 		return false, true
 	}
 	return true, false

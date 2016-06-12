@@ -52,23 +52,25 @@ func ListByFilters(skip int, filters ...Filter) (callinfos []CallInfo) {
 }
 
 // http://stackoverflow.com/questions/25262754/how-to-get-name-of-current-package-in-go
-func retrieveCallInfo(skip int) (callinfo CallInfo, ok bool) {
-	if callinfo.PC, callinfo.FilePath, callinfo.Line, ok = runtime.Caller(skip + 1); !ok {
+func retrieveCallInfo(skip int) (result CallInfo, ok bool) {
+	callinfo := CallInfoImpl{}
+
+	if callinfo.pc, callinfo.filePath, callinfo.line, ok = runtime.Caller(skip + 1); !ok {
 		return
 	}
 
-	callinfo.FileDir, callinfo.FileName = path.Split(callinfo.FilePath)
-	callinfo.PCFunc = runtime.FuncForPC(callinfo.PC)
+	callinfo.fileDir, callinfo.fileName = path.Split(callinfo.filePath)
+	callinfo.pcFunc = runtime.FuncForPC(callinfo.pc)
 
-	parts := strings.Split(callinfo.PCFunc.Name(), ".")
+	parts := strings.Split(callinfo.pcFunc.Name(), ".")
 	pl := len(parts)
-	callinfo.FuncName = parts[pl-1]
+	callinfo.funcName = parts[pl-1]
 
 	if parts[pl-2][0] == '(' {
-		callinfo.FuncName = parts[pl-2] + "." + callinfo.FuncName
-		callinfo.PackageName = strings.Join(parts[0:pl-2], ".")
+		callinfo.funcName = parts[pl-2] + "." + callinfo.funcName
+		callinfo.packageName = strings.Join(parts[0:pl-2], ".")
 	} else {
-		callinfo.PackageName = strings.Join(parts[0:pl-1], ".")
+		callinfo.packageName = strings.Join(parts[0:pl-1], ".")
 	}
 
 	return callinfo, true

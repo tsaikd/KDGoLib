@@ -79,10 +79,10 @@ func castErrorObject(factory ErrorFactory, skip int, err error) ErrorObject {
 	default:
 		callinfo, _ := RuntimeCaller(skip + 1)
 		return &errorObject{
-			packageName: callinfo.PackageName,
-			fileName:    callinfo.FileName,
-			funcName:    callinfo.FuncName,
-			line:        callinfo.Line,
+			packageName: callinfo.PackageName(),
+			fileName:    callinfo.FileName(),
+			funcName:    callinfo.FuncName(),
+			line:        callinfo.Line(),
 			errtext:     err.Error(),
 			factory:     factory,
 		}

@@ -38,7 +38,7 @@ func AllSortedNamedFactories() []ErrorFactory {
 // NewFactory return new ErrorFactory instance
 func NewFactory(errtext string) ErrorFactory {
 	callinfo, _ := RuntimeCaller(1)
-	return NewNamedFactory(callinfo.PackageName+"->"+errtext, errtext)
+	return NewNamedFactory(callinfo.PackageName()+"->"+errtext, errtext)
 }
 
 // NewNamedFactory return new ErrorFactory instance with factory name, panic if name duplicated

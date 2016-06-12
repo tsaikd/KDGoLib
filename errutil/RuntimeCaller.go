@@ -16,7 +16,7 @@ func AddRuntimeCallerFilter(filters ...runtimecaller.Filter) {
 
 // RuntimeCallerFilterStopErrutilPackage filter CallInfo to stop after reach KDGoLib/errutil package
 func RuntimeCallerFilterStopErrutilPackage(callinfo runtimecaller.CallInfo) (valid bool, stop bool) {
-	if callinfo.PackageName == "github.com/tsaikd/KDGoLib/errutil" {
+	if callinfo.PackageName() == "github.com/tsaikd/KDGoLib/errutil" {
 		return false, true
 	}
 	return true, false

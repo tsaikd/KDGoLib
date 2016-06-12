@@ -35,7 +35,7 @@ func addspace(text string, addspaceflag bool) (string, bool) {
 }
 
 func filterLogrusRuntimeCaller(callinfo runtimecaller.CallInfo) (valid bool, stop bool) {
-	return !strings.Contains(callinfo.PackageName, "github.com/Sirupsen/logrus"), false
+	return !strings.Contains(callinfo.PackageName(), "github.com/Sirupsen/logrus"), false
 }
 
 // Format output logrus entry
@@ -64,9 +64,9 @@ func (t *ConsoleLogFormatter) Format(entry *logrus.Entry) (data []byte, err erro
 		var filelinetext string
 		if callinfo, ok := errutil.RuntimeCaller(1+t.CallerOffset, filterLogrusRuntimeCaller); ok {
 			if t.Flag&Lshortfile != 0 {
-				filelinetext = fmt.Sprintf("%s:%d", callinfo.FileName, callinfo.Line)
+				filelinetext = fmt.Sprintf("%s:%d", callinfo.FileName(), callinfo.Line())
 			} else {
-				filelinetext = fmt.Sprintf("%s/%s:%d", callinfo.PackageName, callinfo.FileName, callinfo.Line)
+				filelinetext = fmt.Sprintf("%s/%s:%d", callinfo.PackageName(), callinfo.FileName(), callinfo.Line())
 			}
 
 			filelinetext, addspaceflag = addspace(filelinetext, addspaceflag)
@@ -88,7 +88,7 @@ func (t *ConsoleLogFormatter) Format(entry *logrus.Entry) (data []byte, err erro
 	}
 
 	message := entry.Message
-	message, addspaceflag = addspace(message, addspaceflag)
+	message, _ = addspace(message, addspaceflag)
 	if _, err = buffer.WriteString(message); err != nil {
 		err = errutil.New("write message to buffer failed", err)
 		return
