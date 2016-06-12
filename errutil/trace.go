@@ -32,6 +32,9 @@ func TraceSkip(err error, skip int) {
 			panic(errfmt)
 		}
 	}
+	if errtext == "" {
+		return
+	}
 	if !strings.HasSuffix(errtext, "\n") {
 		errtext += "\n"
 	}
