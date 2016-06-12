@@ -1,0 +1,11 @@
+{
+	"ImportPath": "github.com/tsaikd/KDGoLib",
+	"GoVersion": "go1.6",
+	"GodepVersion": "v60",
+	"Deps": [
+		{
+			"ImportPath": "github.com/codegangsta/cli",
+			"Rev": "65357985c23b86d64bdd3d020848edc4f0a5f86e"
+		}
+	]
+}
