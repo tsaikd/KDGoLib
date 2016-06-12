@@ -1,9 +1,9 @@
 package cmder
 
-import "github.com/codegangsta/cli"
+import "gopkg.in/urfave/cli.v2"
 
 // NewCommand return cli.Command with module
-func NewCommand(module Module, usedModules ...Module) cli.Command {
+func NewCommand(module Module, usedModules ...Module) *cli.Command {
 	flags := []cli.Flag{}
 	flags = append(flags, module.Flags...)
 	flags = append(flags, module.Depend.Flags(usedModules...)...)
@@ -18,7 +18,7 @@ func NewCommand(module Module, usedModules ...Module) cli.Command {
 	afterActions.Add(module.After)
 	afterActions.Add(module.Depend.AfterActions(usedModules...)...)
 
-	return cli.Command{
+	return &cli.Command{
 		Name:   module.Name,
 		Usage:  module.Usage,
 		Flags:  flags,

@@ -3,9 +3,9 @@ package cmder
 import (
 	"os"
 
-	"github.com/codegangsta/cli"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/version"
+	"gopkg.in/urfave/cli.v2"
 )
 
 // Main entry point
@@ -18,7 +18,7 @@ func Main(module Module, commandModules ...Module) {
 		usedModules = append(usedModules, *mod)
 	}
 
-	cmds := cli.Commands{}
+	cmds := []*cli.Command{}
 	for _, cmdmod := range commandModules {
 		cmds = append(cmds, NewCommand(cmdmod, usedModules...))
 	}

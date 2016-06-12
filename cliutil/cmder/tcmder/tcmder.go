@@ -3,8 +3,8 @@ package tcmder
 import (
 	"flag"
 
-	"github.com/codegangsta/cli"
 	"github.com/tsaikd/KDGoLib/cliutil/cmder"
+	"gopkg.in/urfave/cli.v2"
 )
 
 // NewTest create TestModule instance
@@ -16,7 +16,7 @@ func NewTest(module cmder.Module) TestModule {
 
 // TestModule used for testing cmder.Module
 type TestModule struct {
-	command cli.Command
+	command *cli.Command
 	context *cli.Context
 }
 

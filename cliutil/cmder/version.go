@@ -3,8 +3,8 @@ package cmder
 import (
 	"fmt"
 
-	"github.com/codegangsta/cli"
 	"github.com/tsaikd/KDGoLib/version"
+	"gopkg.in/urfave/cli.v2"
 )
 
 // VersionModule provide module of version,
