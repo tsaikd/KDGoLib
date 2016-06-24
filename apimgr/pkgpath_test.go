@@ -4,19 +4,19 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_getPackagePath(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
 
 	pkgpath := getPackagePath(reflect.ValueOf("github.com/tsaikd/KDGoLib/apimgr"))
-	assert.Equal("github.com/tsaikd/KDGoLib/apimgr", pkgpath)
+	require.Contains(pkgpath, "github.com/tsaikd/KDGoLib/apimgr")
 
 	pkgpath = getPackagePath(reflect.ValueOf(Manager{}))
-	assert.Equal("github.com/tsaikd/KDGoLib/apimgr", pkgpath)
+	require.Contains(pkgpath, "github.com/tsaikd/KDGoLib/apimgr")
 
 	pkgpath = getPackagePath(reflect.ValueOf(&Manager{}))
-	assert.Equal("github.com/tsaikd/KDGoLib/apimgr", pkgpath)
+	require.Contains(pkgpath, "github.com/tsaikd/KDGoLib/apimgr")
 }
