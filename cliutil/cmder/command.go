@@ -9,14 +9,14 @@ func NewCommand(module Module, usedModules ...Module) *cli.Command {
 	flags = append(flags, module.Depend.Flags(usedModules...)...)
 
 	beforeActions := Actions{}
-	beforeActions.Add(module.Depend.BeforeActions(usedModules...)...)
+	beforeActions.Add(module.Depend.BeforeActions()...)
 	beforeActions.Add(module.Before)
 	actions := Actions{}
-	actions.Add(module.Depend.Actions(usedModules...)...)
+	actions.Add(module.Depend.Actions()...)
 	actions.Add(module.Action)
 	afterActions := Actions{}
 	afterActions.Add(module.After)
-	afterActions.Add(module.Depend.AfterActions(usedModules...)...)
+	afterActions.Add(module.Depend.AfterActions()...)
 
 	return &cli.Command{
 		Name:   module.Name,
