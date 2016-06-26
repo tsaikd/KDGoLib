@@ -4,20 +4,20 @@ import (
 	"bytes"
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"strings"
 
 	"github.com/tsaikd/KDGoLib/errutil"
 )
 
+// errors
 var (
-	ErrorUnsupportedScanType1 = errutil.NewFactory("unsupported scan type: %v")
+	ErrorUnsupportedScanType1 = errutil.NewFactory("unsupported scan type: %T")
 	ErrorInvalidObjType1      = errutil.NewFactory("invalid obj type: %T")
 	ErrorNoValueFound1        = errutil.NewFactory("no value found for key %v")
 )
 
-// Set obj to value's JSON representation
+// SQLScanJson set obj to value's JSON representation
 func SQLScanJson(obj interface{}, value interface{}) (err error) {
 	if value == nil {
 		return
@@ -30,7 +30,7 @@ func SQLScanJson(obj interface{}, value interface{}) (err error) {
 	}
 }
 
-// Return obj's JSON representation which implements driver.Value
+// SQLValueJson return obj's JSON representation which implements driver.Value
 func SQLValueJson(obj interface{}) (value driver.Value, err error) {
 	if obj == nil {
 		return
@@ -58,7 +58,7 @@ func ensureScanValue(obj interface{}) (refval reflect.Value, err error) {
 	return pv, nil
 }
 
-// Set obj to value's string representation
+// SQLScanString set obj to value's string representation
 func SQLScanString(obj interface{}, value interface{}) (err error) {
 	if value == nil {
 		return
@@ -71,14 +71,17 @@ func SQLScanString(obj interface{}, value interface{}) (err error) {
 
 	switch value.(type) {
 	case []byte:
-		pv.SetString(fmt.Sprintf("%s", value))
+		pv.SetString(string(value.([]byte)))
+		return
+	case string:
+		pv.SetString(value.(string))
 		return
 	default:
 		return ErrorUnsupportedScanType1.New(nil, value)
 	}
 }
 
-// Set obj to value's enum in stringMapEnum representation
+// SQLScanEnumString set obj to value's enum in stringMapEnum representation
 func SQLScanEnumString(obj interface{}, value interface{}, stringMapEnum map[string]interface{}) (err error) {
 	if value == nil {
 		return
@@ -89,22 +92,26 @@ func SQLScanEnumString(obj interface{}, value interface{}, stringMapEnum map[str
 		return
 	}
 
+	var enumstr string
 	switch value.(type) {
 	case []byte:
-		enumstr := fmt.Sprintf("%s", value)
-		enumval, ok := stringMapEnum[enumstr]
-		if !ok {
-			return ErrorNoValueFound1.New(nil, value)
-		}
-		ev := reflect.ValueOf(enumval)
-		pv.Set(ev)
-		return
+		enumstr = string(value.([]byte))
+	case string:
+		enumstr = value.(string)
 	default:
 		return ErrorUnsupportedScanType1.New(nil, value)
 	}
+
+	enumval, ok := stringMapEnum[enumstr]
+	if !ok {
+		return ErrorNoValueFound1.New(nil, value)
+	}
+	ev := reflect.ValueOf(enumval)
+	pv.Set(ev)
+	return
 }
 
-// Set obj to value's stringslice representation
+// SQLScanStringSlice set obj to value's stringslice representation
 func SQLScanStringSlice(obj interface{}, value interface{}) (err error) {
 	if value == nil {
 		return
@@ -120,12 +127,16 @@ func SQLScanStringSlice(obj interface{}, value interface{}) (err error) {
 		stringslice := parseArray(string(value.([]byte)))
 		pv.Set(reflect.ValueOf(stringslice))
 		return
+	case string:
+		stringslice := parseArray(value.(string))
+		pv.Set(reflect.ValueOf(stringslice))
+		return
 	default:
 		return ErrorUnsupportedScanType1.New(nil, value)
 	}
 }
 
-// Return s postgresql representation which implements driver.Value
+// SQLValueStringSlice return s postgresql representation which implements driver.Value
 func SQLValueStringSlice(obj interface{}) (value driver.Value, err error) {
 	if obj == nil {
 		return
@@ -137,9 +148,8 @@ func SQLValueStringSlice(obj interface{}) (value driver.Value, err error) {
 	case reflect.Ptr:
 		if rv.IsNil() {
 			return
-		} else {
-			return SQLValueStringSlice(reflect.Indirect(rv).Interface())
 		}
+		return SQLValueStringSlice(reflect.Indirect(rv).Interface())
 	case reflect.Slice:
 		switch rv.Type().Elem().Kind() {
 		case reflect.String:
