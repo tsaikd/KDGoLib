@@ -42,12 +42,12 @@ func NewApp(module Module) *cli.App {
 	afterActions.Add(module.After)
 	afterActions.Add(module.Depend.AfterActions()...)
 
-	app := cli.NewApp()
-	app.Name = module.Name
-	app.Usage = module.Usage
-	app.Flags = flags
-	app.Before = cli.BeforeFunc(beforeActions.Wrap())
-	app.Action = actions.WrapMain(module.Action)
-	app.After = cli.AfterFunc(afterActions.Wrap())
-	return app
+	return &cli.App{
+		Name:   module.Name,
+		Usage:  module.Usage,
+		Flags:  flags,
+		Before: cli.BeforeFunc(beforeActions.Wrap()),
+		Action: actions.WrapMain(module.Action),
+		After:  cli.AfterFunc(afterActions.Wrap()),
+	}
 }
