@@ -1,6 +1,9 @@
 package cmder
 
-import "gopkg.in/urfave/cli.v2"
+import (
+	"github.com/tsaikd/KDGoLib/version"
+	"gopkg.in/urfave/cli.v2"
+)
 
 // NewCommand return cli.Command with module
 func NewCommand(module Module, usedModules ...Module) *cli.Command {
@@ -28,8 +31,8 @@ func NewCommand(module Module, usedModules ...Module) *cli.Command {
 	}
 }
 
-// NewApp return *cli.App with module
-func NewApp(module Module) *cli.App {
+// NewApp return *cli.App with module and command modules
+func NewApp(module Module, commandModules ...Module) *cli.App {
 	flags := []cli.Flag{}
 	flags = append(flags, module.Flags...)
 	flags = append(flags, module.Depend.Flags()...)
@@ -42,12 +45,29 @@ func NewApp(module Module) *cli.App {
 	afterActions.Add(module.After)
 	afterActions.Add(module.Depend.AfterActions()...)
 
-	return &cli.App{
-		Name:   module.Name,
-		Usage:  module.Usage,
-		Flags:  flags,
-		Before: cli.BeforeFunc(beforeActions.Wrap()),
-		Action: actions.WrapMain(module.Action),
-		After:  cli.AfterFunc(afterActions.Wrap()),
+	app := &cli.App{
+		Name:    module.Name,
+		Usage:   module.Usage,
+		Flags:   flags,
+		Before:  cli.BeforeFunc(beforeActions.Wrap()),
+		Action:  actions.WrapMain(module.Action),
+		After:   cli.AfterFunc(afterActions.Wrap()),
+		Version: version.String(),
 	}
+
+	usedModules := []Module{module}
+	for _, mod := range module.Depend.DependOnce() {
+		usedModules = append(usedModules, *mod)
+	}
+
+	cmds := []*cli.Command{}
+	for _, cmdmod := range commandModules {
+		cmds = append(cmds, NewCommand(cmdmod, usedModules...))
+	}
+	if VersionModule != nil {
+		cmds = append(cmds, NewCommand(*VersionModule, usedModules...))
+	}
+	app.Commands = cmds
+
+	return app
 }
