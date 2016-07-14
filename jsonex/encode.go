@@ -292,7 +292,46 @@ func isEmptyValue(v reflect.Value) bool {
 	case reflect.Float32, reflect.Float64:
 		return v.Float() == 0
 	case reflect.Interface, reflect.Ptr:
-		return v.IsNil()
+		if v.IsNil() {
+			return true
+		}
+		return isEmptyValue(v.Elem())
+	case reflect.Struct:
+		if v.CanInterface() {
+			if marshaler, ok := v.Interface().(Marshaler); ok {
+				if data, err := marshaler.MarshalJSON(); err == nil {
+					switch string(data) {
+					case "null", "{}", "[]":
+						return true
+					default:
+						return false
+					}
+				}
+			}
+		}
+		t := v.Type()
+		for i, n := 0, t.NumField(); i < n; i++ {
+			elemVal := v.Field(i)
+			elemField := t.Field(i)
+			if !elemField.Anonymous && !elemVal.CanInterface() {
+				continue
+			}
+
+			tag := elemField.Tag.Get("json")
+			if tag == ignoreTag {
+				continue
+			}
+
+			if isDefaultValue(elemVal, elemField.Tag.Get("default")) {
+				continue
+			}
+			if isEmptyValue(elemVal) {
+				continue
+			}
+
+			return false
+		}
+		return true
 	}
 	return false
 }
@@ -575,6 +614,9 @@ func (se *structEncoder) encode(e *encodeState, v reflect.Value, quoted bool) {
 	for i, f := range se.fields {
 		fv := fieldByIndex(v, f.index)
 		if !fv.IsValid() || f.omitEmpty && isEmptyValue(fv) {
+			continue
+		}
+		if f.omitDefault && isDefaultValue(fv, f.defaultTag) {
 			continue
 		}
 		if first {
@@ -942,11 +984,13 @@ type field struct {
 	nameBytes []byte                 // []byte(name)
 	equalFold func(s, t []byte) bool // bytes.EqualFold or equivalent
 
-	tag       bool
-	index     []int
-	typ       reflect.Type
-	omitEmpty bool
-	quoted    bool
+	tag         bool
+	index       []int
+	typ         reflect.Type
+	omitEmpty   bool
+	omitDefault bool
+	defaultTag  string
+	quoted      bool
 }
 
 func fillField(f field) field {
@@ -1031,7 +1075,7 @@ func typeFields(t reflect.Type) []field {
 					continue
 				}
 				tag := sf.Tag.Get("json")
-				if tag == "-" {
+				if tag == ignoreTag {
 					continue
 				}
 				name, opts := parseTag(tag)
@@ -1068,12 +1112,14 @@ func typeFields(t reflect.Type) []field {
 						name = sf.Name
 					}
 					fields = append(fields, fillField(field{
-						name:      name,
-						tag:       tagged,
-						index:     index,
-						typ:       ft,
-						omitEmpty: opts.Contains("omitempty"),
-						quoted:    quoted,
+						name:        name,
+						tag:         tagged,
+						index:       index,
+						typ:         ft,
+						omitEmpty:   opts.Contains("omitempty"),
+						omitDefault: opts.Contains("omitdefault"),
+						defaultTag:  sf.Tag.Get("default"),
+						quoted:      quoted,
 					}))
 					if count[f.typ] > 1 {
 						// If there were multiple instances, add a second,
