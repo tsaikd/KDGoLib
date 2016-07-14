@@ -1,5 +1,5 @@
 errutil
-=================================
+=======
 
 An error handling helper, providing more APIs than built-in package (errors, fmt), and compatible with go error interface
 

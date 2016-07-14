@@ -9,5 +9,9 @@ KDGoLib
 	* Enum creation helper
 * [errutil](errutil)
 	* An error handling helper
+* [jsonex](jsonex)
+	* Extend built-in json package
+	* support **omitdefault** json flag and **default** tag
+	* support **omitempty** on struct
 * [version](version)
 	* Golang application general version helper
