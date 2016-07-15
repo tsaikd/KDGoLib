@@ -7,6 +7,21 @@ import (
 
 const ignoreTag = "-"
 
+// IsEmpty return true if v is empty for supported types
+func IsEmpty(v interface{}) bool {
+	switch val := v.(type) {
+	case reflect.Value:
+		return isEmptyValue(val)
+	case *reflect.Value:
+		if val == nil {
+			return true
+		}
+		return isEmptyValue(*val)
+	default:
+		return isEmptyValue(reflect.ValueOf(v))
+	}
+}
+
 func isDefaultValue(v reflect.Value, defaultTag string) bool {
 	switch v.Kind() {
 	case reflect.Array, reflect.Map, reflect.Slice:

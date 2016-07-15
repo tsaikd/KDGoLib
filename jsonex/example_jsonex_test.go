@@ -68,3 +68,33 @@ func ExampleMarshal_omitemptyOnStruct() {
 	// Output:
 	// {"Int":0,"Float":0}
 }
+
+// check value is empty or not
+func ExampleIsEmpty() {
+	type myStruct struct {
+		String string
+	}
+
+	fmt.Println(jsonex.IsEmpty(true))
+	fmt.Println(jsonex.IsEmpty(1))
+	fmt.Println(jsonex.IsEmpty("text"))
+	fmt.Println(jsonex.IsEmpty(myStruct{"text"}))
+
+	fmt.Println(jsonex.IsEmpty(false))
+	fmt.Println(jsonex.IsEmpty(0))
+	fmt.Println(jsonex.IsEmpty(""))
+	fmt.Println(jsonex.IsEmpty([]interface{}{}))
+	fmt.Println(jsonex.IsEmpty(marshalStruct{"text"}))
+	fmt.Println(jsonex.IsEmpty(myStruct{""}))
+	// Output:
+	// false
+	// false
+	// false
+	// false
+	// true
+	// true
+	// true
+	// true
+	// true
+	// true
+}
