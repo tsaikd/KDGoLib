@@ -5,13 +5,7 @@ import (
 	"fmt"
 )
 
-type Version struct {
-	VERSION   string      `json:"version"`
-	BUILDTIME string      `json:"buildtime,omitempty"`
-	GITCOMMIT string      `json:"gitcommit,omitempty"`
-	GODEPS    interface{} `json:"godeps,omitempty"`
-}
-
+// exported variables
 var (
 	VERSION   = "0.0.0"
 	BUILDTIME string
@@ -19,24 +13,31 @@ var (
 	GODEPS    string
 )
 
+// Version contains info for Get response
+type Version struct {
+	VERSION   string      `json:"version"`
+	BUILDTIME string      `json:"buildtime,omitempty"`
+	GITCOMMIT string      `json:"gitcommit,omitempty"`
+	GODEPS    interface{} `json:"godeps,omitempty"`
+}
+
+// Get return Version info
 func Get() (ver Version) {
 	var godeps interface{}
 	if GODEPS != "" {
 		json.Unmarshal([]byte(GODEPS), &godeps)
 	}
-	ver = Version{
+	return Version{
 		VERSION:   VERSION,
 		BUILDTIME: BUILDTIME,
 		GITCOMMIT: GITCOMMIT,
 		GODEPS:    godeps,
 	}
-	return
 }
 
+// Json return version info with JSON format
 func Json() (output string, err error) {
-	var (
-		raw []byte
-	)
+	var raw []byte
 	ver := Get()
 	if raw, err = json.MarshalIndent(ver, "", "\t"); err != nil {
 		return
@@ -45,6 +46,7 @@ func Json() (output string, err error) {
 	return
 }
 
+// String return version info with string format
 func String() (output string) {
 	output = VERSION
 	if BUILDTIME != "" {
