@@ -7,12 +7,25 @@ import (
 )
 
 // IsExist return true if path exist
+//
+// https://gist.github.com/mattes/d13e273314c3b3ade33f
+// if _, err := os.Stat("/path/to/whatever"); err == nil {
+// 	// path/to/whatever exists
+// }
 func IsExist(path string) bool {
 	_, err := os.Stat(path)
-	if err == nil {
-		return true
-	}
-	return os.IsExist(err)
+	return err == nil
+}
+
+// IsNotExist return true if path not exist
+//
+// https://gist.github.com/mattes/d13e273314c3b3ade33f
+// if _, err := os.Stat("/path/to/whatever"); os.IsNotExist(err) {
+// 	// path/to/whatever does not exist
+// }
+func IsNotExist(path string) bool {
+	_, err := os.Stat(path)
+	return os.IsNotExist(err)
 }
 
 // IsDir return true if path exist and is directory
