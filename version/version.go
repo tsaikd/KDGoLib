@@ -3,6 +3,10 @@ package version
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"time"
+
+	"github.com/kardianos/osext"
 )
 
 // exported variables
@@ -25,7 +29,12 @@ type Version struct {
 func Get() (ver Version) {
 	var godeps interface{}
 	if GODEPS != "" {
-		json.Unmarshal([]byte(GODEPS), &godeps)
+		_ = json.Unmarshal([]byte(GODEPS), &godeps)
+	}
+	if BUILDTIME == "" {
+		if exectime, err := getExecModifyTime(); err == nil {
+			BUILDTIME = exectime.Format(time.RFC1123)
+		}
 	}
 	return Version{
 		VERSION:   VERSION,
@@ -35,8 +44,8 @@ func Get() (ver Version) {
 	}
 }
 
-// Json return version info with JSON format
-func Json() (output string, err error) {
+// JSON return version info with JSON format
+func JSON() (output string, err error) {
 	var raw []byte
 	ver := Get()
 	if raw, err = json.MarshalIndent(ver, "", "\t"); err != nil {
@@ -56,4 +65,18 @@ func String() (output string) {
 		output += fmt.Sprintf(" (%s)", GITCOMMIT)
 	}
 	return
+}
+
+func getExecModifyTime() (modtime time.Time, err error) {
+	execFileName, err := osext.Executable()
+	if err != nil {
+		return
+	}
+
+	fi, err := os.Stat(execFileName)
+	if err != nil {
+		return
+	}
+
+	return fi.ModTime(), nil
 }

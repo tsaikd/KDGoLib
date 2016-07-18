@@ -12,14 +12,11 @@ func init() {
 
 func Example() {
 	fmt.Println(version.String())
-	verjson, err := version.Json()
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(verjson)
+
+	ver := version.Get()
+	fmt.Println(ver.VERSION)
+
 	// Output:
 	// 0.0.1
-	// {
-	//	"version": "0.0.1"
-	// }
+	// 0.0.1
 }

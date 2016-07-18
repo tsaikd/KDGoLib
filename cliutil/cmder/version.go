@@ -14,7 +14,7 @@ var VersionModule = NewModule("version").
 	SetAction(versionAction)
 
 func versionAction(c *cli.Context) (err error) {
-	verjson, err := version.Json()
+	verjson, err := version.JSON()
 	if err != nil {
 		return
 	}

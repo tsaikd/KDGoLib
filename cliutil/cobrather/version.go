@@ -13,7 +13,7 @@ var VersionModule = &Module{
 	Use:   "version",
 	Short: "Show version detail",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		verjson, err := version.Json()
+		verjson, err := version.JSON()
 		if err != nil {
 			return err
 		}
