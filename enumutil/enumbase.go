@@ -11,7 +11,7 @@ import (
 
 // errors
 var (
-	ErrorEnumString1 = errutil.NewFactory("convert string to enum failed: %v")
+	ErrorEnumString1 = errutil.NewFactory("convert string to enum failed: %q")
 )
 
 type EnumString interface {
@@ -44,9 +44,13 @@ func (t enumBase) UnmarshalJSON(enum interface{}, b []byte) (err error) {
 	if err = json.Unmarshal(b, &str); err != nil {
 		return
 	}
+
 	en, ok := t.maps2e[str]
 	if !ok {
-		return errutil.New("can not unmarshal data to enum, " + string(b))
+		if str == "" {
+			return nil
+		}
+		return ErrorEnumString1.New(nil, string(b))
 	}
 
 	reflect.ValueOf(enum).Elem().Set(reflect.ValueOf(en))
