@@ -3,11 +3,11 @@ package sqlutil
 import (
 	"bytes"
 	"database/sql/driver"
-	"encoding/json"
 	"reflect"
 	"strings"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+	"github.com/tsaikd/KDGoLib/jsonex"
 )
 
 // errors
@@ -17,33 +17,45 @@ var (
 	ErrorNoValueFound1        = errutil.NewFactory("no value found for key %v")
 )
 
-// SQLScanJson set obj to value's JSON representation
-func SQLScanJson(obj interface{}, value interface{}) (err error) {
-	if value == nil {
-		return
-	}
-	switch value.(type) {
+// SQLScanJSON set obj to value's JSON representation
+func SQLScanJSON(obj interface{}, value interface{}) (err error) {
+	switch val := value.(type) {
 	case []byte:
-		return json.Unmarshal(value.([]byte), obj)
+		return jsonex.Unmarshal(val, obj)
+	case nil:
+		return nil
 	default:
 		return ErrorUnsupportedScanType1.New(nil, value)
 	}
 }
 
-// SQLValueJson return obj's JSON representation which implements driver.Value
-func SQLValueJson(obj interface{}) (value driver.Value, err error) {
+// SQLScanStrictJSON set obj to value's JSON representation, all field should exist in obj
+func SQLScanStrictJSON(obj interface{}, value interface{}) (err error) {
+	switch val := value.(type) {
+	case []byte:
+		decoder := jsonex.NewDecoder(bytes.NewBuffer(val))
+		decoder.MissingFieldAsError()
+		return decoder.Decode(obj)
+	case nil:
+		return nil
+	default:
+		return ErrorUnsupportedScanType1.New(nil, value)
+	}
+}
+
+// SQLValueJSON return obj's JSON representation which implements driver.Value
+func SQLValueJSON(obj interface{}) (value driver.Value, err error) {
 	if obj == nil {
 		return
 	}
-	jsondata, err := json.Marshal(obj)
+	jsondata, err := jsonex.Marshal(obj)
 	if err != nil {
 		return
 	}
 	if bytes.Equal([]byte("{}"), jsondata) {
 		return
 	}
-	value = jsondata
-	return
+	return jsondata, nil
 }
 
 func ensureScanValue(obj interface{}) (refval reflect.Value, err error) {

@@ -56,7 +56,7 @@ func init() {
 // Parse the output string from the array type.
 // Regex used: (((?P<value>(([^",\\{}\s(NULL)])+|"([^"\\]|\\"|\\\\)*")))(,)?)
 func parseArray(array string) []string {
-	results := make([]string, 0)
+	results := []string{}
 	matches := arrayExp.FindAllStringSubmatch(array, -1)
 	for _, match := range matches {
 		s := match[valueIndex]

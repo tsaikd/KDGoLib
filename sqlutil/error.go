@@ -7,6 +7,7 @@ import (
 	"github.com/tsaikd/KDGoLib/errutil"
 )
 
+// IsErrorNoRowsInResultSet check err is sql error "no rows in result set"
 func IsErrorNoRowsInResultSet(err error) bool {
 	if err == nil {
 		return false
@@ -14,15 +15,16 @@ func IsErrorNoRowsInResultSet(err error) bool {
 	return err.Error() == "sql: no rows in result set"
 }
 
+// IsContainErrorNoRowsInResultSet check err contain sql error "no rows in result set"
 func IsContainErrorNoRowsInResultSet(err error) bool {
 	return errutil.ContainErrorFunc(err, IsErrorNoRowsInResultSet)
 }
 
+// IsErrorDuplicateViolateUniqueConstraint check err is sql error "duplicate key value violates unique constraint"
 func IsErrorDuplicateViolateUniqueConstraint(err error) bool {
-	if err == nil {
-		return false
-	}
 	switch err.(type) {
+	case nil:
+		return false
 	case *pq.Error:
 		e := err.(*pq.Error)
 		if e.Code != "23505" {
@@ -34,15 +36,16 @@ func IsErrorDuplicateViolateUniqueConstraint(err error) bool {
 	}
 }
 
+// IsContainErrorDuplicateViolateUniqueConstraint check err contain sql error "duplicate key value violates unique constraint"
 func IsContainErrorDuplicateViolateUniqueConstraint(err error) bool {
 	return errutil.ContainErrorFunc(err, IsErrorDuplicateViolateUniqueConstraint)
 }
 
+// IsErrorTsquerySyntax check error is sql error "syntax error in tsquery"
 func IsErrorTsquerySyntax(err error) bool {
-	if err == nil {
-		return false
-	}
 	switch err.(type) {
+	case nil:
+		return false
 	case *pq.Error:
 		e := err.(*pq.Error)
 		if e.Code != "42601" {
@@ -54,6 +57,7 @@ func IsErrorTsquerySyntax(err error) bool {
 	}
 }
 
+// IsContainErrorTsquerySyntax check error contain sql error "syntax error in tsquery"
 func IsContainErrorTsquerySyntax(err error) bool {
 	return errutil.ContainErrorFunc(err, IsErrorTsquerySyntax)
 }
