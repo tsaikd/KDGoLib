@@ -9,6 +9,8 @@ import (
 type Module struct {
 	// The one-line usage message.
 	Use string
+	// An array of aliases that can be used instead of the first word in Use.
+	Aliases []string
 	// The short description shown in the 'help' output.
 	Short string
 	// The long message shown in the 'help <this-command>' output.
@@ -36,6 +38,7 @@ func (t *Module) MustNewCommand() *cobra.Command {
 
 	command := &cobra.Command{
 		Use:      t.Use,
+		Aliases:  t.Aliases,
 		Short:    t.Short,
 		Long:     t.Long,
 		Example:  t.Example,
