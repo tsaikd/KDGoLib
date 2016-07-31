@@ -32,3 +32,6 @@ func (t *JSONFormatter) FormatSkip(errin error, skip int) (errtext string, err e
 
 	return buffer.String(), nil
 }
+
+var _ ErrorFormatter = &JSONFormatter{}
+var _ TraceFormatter = &JSONFormatter{}

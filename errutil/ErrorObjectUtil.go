@@ -2,9 +2,12 @@ package errutil
 
 import "encoding/json"
 
+// WalkFunc is a callback for WalkErrors
+type WalkFunc func(errcomp ErrorObject) (stop bool, err error)
+
 // WalkErrors walk from base error through all parents
 // return ErrorWalkLoop if detected loop
-func WalkErrors(base ErrorObject, walkFunc func(errcomp ErrorObject) (stop bool, walkerr error)) (err error) {
+func WalkErrors(base ErrorObject, walkFunc WalkFunc) (err error) {
 	if base == nil {
 		return
 	}

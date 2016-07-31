@@ -23,14 +23,8 @@ func TraceWrap(err error, wraperr error) {
 func TraceSkip(err error, skip int) {
 	var errtext string
 	var errfmt error
-	if traceFormatter, ok := defaultFormatter.(TraceFormatter); ok {
-		if errtext, errfmt = traceFormatter.FormatSkip(err, skip+1); errfmt != nil {
-			panic(errfmt)
-		}
-	} else {
-		if errtext, errfmt = defaultFormatter.Format(err); errfmt != nil {
-			panic(errfmt)
-		}
+	if errtext, errfmt = defaultTraceFormatter.FormatSkip(err, skip+1); errfmt != nil {
+		panic(errfmt)
 	}
 	if errtext == "" {
 		return
@@ -43,12 +37,25 @@ func TraceSkip(err error, skip int) {
 	}
 }
 
-var defaultFormatter = ErrorFormatter(NewConsoleFormatter("; "))
+var defaultFormatter = ErrorFormatter(&ConsoleFormatter{
+	Seperator: "; ",
+})
+var defaultTraceFormatter = TraceFormatter(&ConsoleFormatter{
+	Seperator:  "; ",
+	TimeFormat: "2006-01-02 15:04:05 ",
+	LongFile:   true,
+	Line:       true,
+})
 var defaultTraceOutput = io.Writer(os.Stderr)
 
 // SetDefaultFormatter set default ErrorFormatter
 func SetDefaultFormatter(formatter ErrorFormatter) {
 	defaultFormatter = formatter
+}
+
+// SetDefaultTraceFormatter set default ErrorFormatter
+func SetDefaultTraceFormatter(formatter TraceFormatter) {
+	defaultTraceFormatter = formatter
 }
 
 // SetDefaultTraceOutput set default error trace output

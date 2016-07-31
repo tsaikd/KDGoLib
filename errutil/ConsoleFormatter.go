@@ -1,17 +1,30 @@
 package errutil
 
-import "bytes"
+import (
+	"bytes"
+	"strconv"
+	"time"
+)
 
 // NewConsoleFormatter create JSONErrorFormatter instance
 func NewConsoleFormatter(seperator string) *ConsoleFormatter {
 	return &ConsoleFormatter{
-		seperator: seperator,
+		Seperator: seperator,
 	}
 }
 
 // ConsoleFormatter used to format error object in console readable
 type ConsoleFormatter struct {
-	seperator string
+	// seperator between errors, e.g. "; " will output "err1; err2; err3"
+	Seperator string
+	// output timestamp for prefix, e.g.  "2006-01-02 15:04:05 "
+	TimeFormat string
+	// show error position with long filename
+	LongFile bool
+	// show error position with short filename
+	ShortFile bool
+	// show error position with line number, work with LongFile or ShortFile
+	Line bool
 }
 
 // Format error object
@@ -21,10 +34,6 @@ func (t *ConsoleFormatter) Format(errin error) (errtext string, err error) {
 
 // FormatSkip trace error line and format object
 func (t *ConsoleFormatter) FormatSkip(errin error, skip int) (errtext string, err error) {
-	if t.seperator == "" {
-		return getErrorText(errin), nil
-	}
-
 	errobj := castErrorObject(nil, skip+1, errin)
 	if errobj == nil {
 		return "", nil
@@ -32,12 +41,54 @@ func (t *ConsoleFormatter) FormatSkip(errin error, skip int) (errtext string, er
 
 	buffer := &bytes.Buffer{}
 
+	if t.TimeFormat != "" {
+		if _, errio := buffer.WriteString(time.Now().Format(t.TimeFormat)); errio != nil {
+			return buffer.String(), errio
+		}
+	}
+
+	if t.LongFile {
+		if _, errio := buffer.WriteString(errobj.PackageName() + "/" + errobj.FileName()); errio != nil {
+			return buffer.String(), errio
+		}
+		if t.Line {
+			if _, errio := buffer.WriteString(":" + strconv.Itoa(errobj.Line())); errio != nil {
+				return buffer.String(), errio
+			}
+		}
+		if _, errio := buffer.WriteString(" "); errio != nil {
+			return buffer.String(), errio
+		}
+	} else if t.ShortFile {
+		if _, errio := buffer.WriteString(errobj.FileName()); errio != nil {
+			return buffer.String(), errio
+		}
+		if t.Line {
+			if _, errio := buffer.WriteString(":" + strconv.Itoa(errobj.Line())); errio != nil {
+				return buffer.String(), errio
+			}
+		}
+		if _, errio := buffer.WriteString(" "); errio != nil {
+			return buffer.String(), errio
+		}
+	}
+
+	if t.Seperator == "" {
+		if _, errio := buffer.WriteString(getErrorText(errin)); errio != nil {
+			return buffer.String(), errio
+		}
+		return buffer.String(), nil
+	}
+
+	firstError := true
 	if walkerr := WalkErrors(errobj, func(errloop ErrorObject) (stop bool, walkerr error) {
-		if buffer.Len() > 0 {
-			if _, errio := buffer.WriteString(t.seperator); errio != nil {
+		if !firstError {
+			if _, errio := buffer.WriteString(t.Seperator); errio != nil {
 				return true, errio
 			}
 		}
+		firstError = false
+
 		if _, errio := buffer.WriteString(getErrorText(errloop)); errio != nil {
 			return true, errio
 		}
@@ -48,3 +99,6 @@ func (t *ConsoleFormatter) FormatSkip(errin error, skip int) (errtext string, er
 
 	return buffer.String(), nil
 }
+
+var _ ErrorFormatter = &ConsoleFormatter{}
+var _ TraceFormatter = &ConsoleFormatter{}
