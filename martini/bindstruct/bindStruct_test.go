@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/go-martini/martini"
+	"github.com/martini-contrib/render"
 	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/KDGoLib/martini/errorJson"
 )
@@ -33,6 +34,7 @@ func Test_binding(t *testing.T) {
 	require.NotNil(require)
 
 	m := martini.Classic()
+	m.Use(render.Renderer())
 	errorJson.BindMartini(m.Martini)
 
 	func() {

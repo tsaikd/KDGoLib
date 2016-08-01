@@ -46,13 +46,8 @@ func RenderErrorJSON(render render.Render, status int, err error, errs ...error)
 
 // BindMartini bind return error handler to martini instance
 func BindMartini(m *martini.Martini) {
-	if rv := m.Get(inject.InterfaceOf((*render.Render)(nil))); !rv.IsValid() {
-		m.Use(render.Renderer())
-	}
-
 	m.Map(returnErrorHandler())
 	m.Use(returnErrorProvider())
-
 	return
 }
 
