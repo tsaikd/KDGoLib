@@ -9,7 +9,7 @@ import (
 
 // errors
 var (
-	ErrorPing = errutil.NewFactory("ping %q return unexpect status code %q")
+	ErrorPing2 = errutil.NewFactory("ping %q return unexpect status code %d")
 )
 
 // PingIgnoreCertificate ping url but ignore https certification check
@@ -23,7 +23,7 @@ func PingIgnoreCertificate(surl string) (err error) {
 		return
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
-		return ErrorPing.New(nil, surl, resp.StatusCode)
+		return ErrorPing2.New(nil, surl, resp.StatusCode)
 	}
 	return
 }
