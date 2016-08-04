@@ -132,6 +132,33 @@ func (t *StringFlag) String() string {
 	return t.viper.GetString(t.Name)
 }
 
+// StringSliceFlag represents a flag that takes as string value
+type StringSliceFlag struct {
+	Name      string
+	ShortHand string
+	Default   []string
+	Usage     string
+	Hidden    bool
+
+	value *[]string
+}
+
+var _ Flag = &StringSliceFlag{}
+
+// Bind flag to flagset and viper for environment
+func (t *StringSliceFlag) Bind(flagset *pflag.FlagSet, v *viper.Viper) (err error) {
+	t.value = flagset.StringSliceP(t.Name, t.ShortHand, t.Default, t.Usage)
+	return bindFlagSet(flagset, v, t.Name, "", t.Hidden)
+}
+
+// StringSlice return flag value
+func (t *StringSliceFlag) StringSlice() []string {
+	if t.value == nil {
+		panic(ErrorFlagNotYetBind1.New(nil, t.Name))
+	}
+	return *t.value
+}
+
 func bindFlagSet(flagset *pflag.FlagSet, v *viper.Viper, name string, envvar string, hidden bool) (err error) {
 	if hidden {
 		if err = flagset.MarkHidden(name); err != nil {
