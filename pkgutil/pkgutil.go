@@ -37,12 +37,52 @@ func GuessPackageFromDir(dir string) (pkg *build.Package, err error) {
 func FindAllSubPackages(importPath string, srcDir string) (pkglist *PackageList, err error) {
 	pkglist = &PackageList{}
 	if srcDir, err = filepath.Abs(srcDir); err != nil {
-		return nil, err
+		return
+	}
+	if importPath == "" {
+		var pkg *build.Package
+		if pkg, err = GuessPackageFromDir(srcDir); err != nil {
+			return
+		}
+		importPath = pkg.ImportPath
 	}
 	if err = collectPackage(pkglist, importPath, srcDir); err != nil {
-		return nil, err
+		return
 	}
-	return pkglist, nil
+	return
+}
+
+// ParsePackagePaths return PackageList by parse paths, ignore vendor
+func ParsePackagePaths(srcDir string, paths ...string) (pkglist *PackageList, err error) {
+	var pkg *build.Package
+	pkglist = &PackageList{}
+	if srcDir, err = filepath.Abs(srcDir); err != nil {
+		return
+	}
+
+	if len(paths) < 1 {
+		if pkg, err = GuessPackageFromDir(srcDir); err != nil {
+			return
+		}
+		pkglist.AddPackage(pkg)
+		return
+	}
+
+	for _, pkgpath := range paths {
+		importPath := strings.TrimSuffix(pkgpath, "/...")
+		if importPath != pkgpath {
+			if err = collectPackage(pkglist, importPath, srcDir); err != nil {
+				return
+			}
+		} else {
+			if pkg, err = build.Import(importPath, srcDir, 0); err != nil {
+				return
+			}
+			pkglist.AddPackage(pkg)
+		}
+	}
+
+	return
 }
 
 func collectPackage(result *PackageList, importPath string, srcDir string) (err error) {
@@ -50,10 +90,11 @@ func collectPackage(result *PackageList, importPath string, srcDir string) (err 
 	if err == nil {
 		result.AddPackage(pkg)
 		if len(pkg.Dir) > len(srcDir) && strings.HasPrefix(pkg.Dir, srcDir) {
-			if err = collectPackageFromSubDir(result, importPath, pkg.Dir); err != nil {
+			if err = collectPackageFromSubDir(result, pkg.ImportPath, pkg.Dir); err != nil {
 				return
 			}
 		}
+		importPath = pkg.ImportPath
 	}
 
 	return collectPackageFromSubDir(result, importPath, srcDir)
