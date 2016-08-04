@@ -64,9 +64,12 @@ func retrieveCallInfo(skip int) (result CallInfo, ok bool) {
 
 	parts := strings.Split(callinfo.pcFunc.Name(), ".")
 	pl := len(parts)
+	if pl < 1 {
+		return result, false
+	}
 	callinfo.funcName = parts[pl-1]
 
-	if parts[pl-2][0] == '(' {
+	if pl >= 2 && parts[pl-2] != "" && parts[pl-2][0] == '(' {
 		callinfo.funcName = parts[pl-2] + "." + callinfo.funcName
 		callinfo.packageName = strings.Join(parts[0:pl-2], ".")
 	} else {

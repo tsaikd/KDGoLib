@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_RuntimeCaller(t *testing.T) {
+func TestRuntimeCaller(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
@@ -30,4 +30,21 @@ func Test_RuntimeCaller(t *testing.T) {
 
 	callinfos = ListByFilters(0, FilterOnlyGoSource, FilterStopRuntimeCallerPackage)
 	require.True(fullstacklen >= len(callinfos))
+}
+
+func Test_retrieveCallInfo(t *testing.T) {
+	require := require.New(t)
+	require.NotNil(require)
+
+	require.NotPanics(func() {
+		ok := true
+		tried := false
+		for i := 1; ok; i++ {
+			_, ok = retrieveCallInfo(i)
+			if ok {
+				tried = true
+			}
+		}
+		require.True(tried)
+	})
 }
