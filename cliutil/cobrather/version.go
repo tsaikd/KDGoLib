@@ -18,12 +18,12 @@ var (
 
 // command line flags
 var (
-	FlagNumber = &BoolFlag{
+	flagNumber = &BoolFlag{
 		Name:      "number",
 		ShortHand: "n",
 		Usage:     "only show the version number",
 	}
-	FlagContains = &StringFlag{
+	flagContains = &StringFlag{
 		Name:      "contains",
 		ShortHand: "c",
 		Usage:     "version is inside the range",
@@ -41,28 +41,31 @@ version -c ">=0.3.5"
 version -c ">=0.3.5 , <1"
 	`),
 	Flags: []Flag{
-		FlagNumber,
-		FlagContains,
+		flagNumber,
+		flagContains,
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if FlagNumber.Bool() {
-			fmt.Println(version.VERSION)
-			return nil
-		}
-		if rangeStr := FlagContains.String(); rangeStr != "" {
-			if err := checkVersionRange(rangeStr); err != nil {
-				return err
-			}
-			return nil
-		}
-
-		verjson, err := version.JSON()
-		if err != nil {
-			return err
-		}
-		fmt.Println(verjson)
-		return nil
+		return showVersion(flagNumber.Bool(), flagContains.String())
 	},
+}
+
+func showVersion(onlyNumber bool, versionRange string) (err error) {
+	if onlyNumber {
+		fmt.Println(version.VERSION)
+		return nil
+	}
+
+	if versionRange != "" {
+		return checkVersionRange(versionRange)
+	}
+
+	verjson, err := version.JSON()
+	if err != nil {
+		return err
+	}
+	fmt.Println(verjson)
+
+	return nil
 }
 
 func checkVersionRange(rangeStr string) (err error) {

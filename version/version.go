@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/kardianos/osext"
@@ -19,10 +20,11 @@ var (
 
 // Version contains info for Get response
 type Version struct {
-	VERSION   string      `json:"version"`
-	BUILDTIME string      `json:"buildtime,omitempty"`
-	GITCOMMIT string      `json:"gitcommit,omitempty"`
-	GODEPS    interface{} `json:"godeps,omitempty"`
+	Version   string      `json:"version"`
+	GoVersion string      `json:"goversion"`
+	BuildTime string      `json:"buildtime,omitempty"`
+	GitCommit string      `json:"gitcommit,omitempty"`
+	Godeps    interface{} `json:"godeps,omitempty"`
 }
 
 // Get return Version info
@@ -37,10 +39,11 @@ func Get() (ver Version) {
 		}
 	}
 	return Version{
-		VERSION:   VERSION,
-		BUILDTIME: BUILDTIME,
-		GITCOMMIT: GITCOMMIT,
-		GODEPS:    godeps,
+		Version:   VERSION,
+		GoVersion: runtime.Version(),
+		BuildTime: BUILDTIME,
+		GitCommit: GITCOMMIT,
+		Godeps:    godeps,
 	}
 }
 

@@ -14,7 +14,7 @@ func Example() {
 	fmt.Println(version.String())
 
 	ver := version.Get()
-	fmt.Println(ver.VERSION)
+	fmt.Println(ver.Version)
 
 	// Output:
 	// 0.0.1
