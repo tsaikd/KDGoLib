@@ -3,7 +3,6 @@ package logrusutil
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/Sirupsen/logrus"
@@ -13,11 +12,11 @@ import (
 
 // flags
 const (
-	Llongfile  = log.Llongfile
-	Lshortfile = log.Lshortfile
-	Ltime      = log.Ltime
-	Llevel     = log.Lshortfile << 1
-	LstdFlags  = Ltime | Lshortfile | Llevel
+	Llongfile = 1 << iota
+	Lshortfile
+	Ltime
+	Llevel
+	LstdFlags = Ltime | Lshortfile | Llevel
 )
 
 // ConsoleLogFormatter suitable formatter for console
