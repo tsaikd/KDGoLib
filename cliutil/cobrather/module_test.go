@@ -68,10 +68,7 @@ func ExampleModule() {
 		},
 	}
 
-	rootCommand := root.MustNewRootCommand(nil)
-	if err := rootCommand.Execute(); err != nil {
-		fmt.Println(err)
-	}
+	root.MustMainRun()
 
 	// Output:
 	// modCommon Run

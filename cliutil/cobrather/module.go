@@ -1,6 +1,8 @@
 package cobrather
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -64,8 +66,8 @@ func (t *Module) MustNewCommand() *cobra.Command {
 }
 
 // MustNewRootCommand create cobra.Command from Module for root application
-func (t *Module) MustNewRootCommand(v *viper.Viper) *cobra.Command {
-	t.viper = v
+func (t *Module) MustNewRootCommand(vr *viper.Viper) *cobra.Command {
+	t.viper = vr
 	if t.viper == nil {
 		t.viper = viper.New()
 	}
@@ -81,6 +83,36 @@ func (t *Module) MustNewRootCommand(v *viper.Viper) *cobra.Command {
 	}
 
 	return command
+}
+
+// MainRunOption option for Module.MustMainRun
+type MainRunOption interface{}
+
+// MainRunOptionViper config Viper
+type MainRunOptionViper *viper.Viper
+
+// MainRunOptionSilenceUsage config SilenceUsage before run, default true
+type MainRunOptionSilenceUsage bool
+
+// MustMainRun used for main package to run main module
+func (t *Module) MustMainRun(options ...MainRunOption) {
+	var vr *viper.Viper
+	SilenceUsage := true
+
+	for _, option := range options {
+		switch opt := option.(type) {
+		case MainRunOptionViper:
+			vr = opt
+		case MainRunOptionSilenceUsage:
+			SilenceUsage = bool(opt)
+		}
+	}
+
+	command := t.MustNewRootCommand(vr)
+	command.SilenceUsage = SilenceUsage
+	if err := command.Execute(); err != nil {
+		os.Exit(-1)
+	}
 }
 
 // GenRunE generate RunE for all modules
