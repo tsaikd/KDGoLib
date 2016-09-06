@@ -4,22 +4,25 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func Test_main(t *testing.T) {
+func TestSQLValueStringSlice(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
 
 	testStringSlice := SQLStringSlice{"abc", "def"}
-	sqlvalue, err := SQLValueStringSlice(testStringSlice)
-	assert.NoError(err)
-	assert.Equal(`{"abc","def"}`, sqlvalue)
+	if sqlvalue, err := SQLValueStringSlice(testStringSlice); assert.NoError(err) {
+		require.Equal(`{"abc","def"}`, sqlvalue)
+	}
 
-	sqlvalue, err = SQLValueStringSlice(&testStringSlice)
-	assert.NoError(err)
-	assert.Equal(`{"abc","def"}`, sqlvalue)
+	if sqlvalue, err := SQLValueStringSlice(&testStringSlice); assert.NoError(err) {
+		require.Equal(`{"abc","def"}`, sqlvalue)
+	}
 
-	sqlvalue, err = SQLValueStringSlice(nil)
-	assert.NoError(err)
-	assert.Nil(sqlvalue)
+	if sqlvalue, err := SQLValueStringSlice(nil); assert.NoError(err) {
+		require.Nil(sqlvalue)
+	}
 }

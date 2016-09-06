@@ -7,10 +7,20 @@ import (
 	"github.com/tsaikd/KDGoLib/errutil"
 )
 
+// errors
+var (
+	ErrorNoRowsInResultSet                = errutil.NewFactory("no rows in result set")
+	ErrorDuplicateViolateUniqueConstraint = errutil.NewFactory("duplicate key value violates unique constraint")
+	ErrorTsquerySyntax                    = errutil.NewFactory("syntax error in tsquery")
+)
+
 // IsErrorNoRowsInResultSet check err is sql error "no rows in result set"
 func IsErrorNoRowsInResultSet(err error) bool {
 	if err == nil {
 		return false
+	}
+	if ErrorNoRowsInResultSet.Match(err) {
+		return true
 	}
 	return err.Error() == "sql: no rows in result set"
 }
@@ -22,6 +32,9 @@ func IsContainErrorNoRowsInResultSet(err error) bool {
 
 // IsErrorDuplicateViolateUniqueConstraint check err is sql error "duplicate key value violates unique constraint"
 func IsErrorDuplicateViolateUniqueConstraint(err error) bool {
+	if ErrorDuplicateViolateUniqueConstraint.Match(err) {
+		return true
+	}
 	switch err.(type) {
 	case nil:
 		return false
@@ -43,6 +56,9 @@ func IsContainErrorDuplicateViolateUniqueConstraint(err error) bool {
 
 // IsErrorTsquerySyntax check error is sql error "syntax error in tsquery"
 func IsErrorTsquerySyntax(err error) bool {
+	if ErrorTsquerySyntax.Match(err) {
+		return true
+	}
 	switch err.(type) {
 	case nil:
 		return false
