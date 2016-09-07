@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/asaskevich/govalidator"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/reflectutil"
+	"github.com/tsaikd/govalidator"
 )
 
 // expose errors
@@ -17,29 +17,13 @@ var (
 	ErrorUnsupportedReflectFieldMethod2 = errutil.NewFactory("unsupported reflect field method: %v <- %v")
 )
 
-func unsafeReflectFieldSlice2Slice(field reflect.Value, val reflect.Value) (err error) {
-	if field.Type().Elem().Kind() == val.Type().Elem().Kind() {
-		field.Set(val)
-	} else {
-		len := val.Len()
-		vals := reflect.MakeSlice(field.Type(), len, len)
-		for i := 0; i < len; i++ {
-			if err = reflectField(vals.Index(i), val.Index(i)); err != nil {
-				return
-			}
-		}
-		field.Set(vals)
-	}
-	return
-}
-
 var (
 	jsonUnmarshaler = reflect.TypeOf((*json.Unmarshaler)(nil)).Elem()
 	typeOfBytes     = reflect.TypeOf([]byte(nil))
 )
 
 func reflectField(field reflect.Value, val reflect.Value) (err error) {
-	if field.Type().Implements(jsonUnmarshaler) {
+	if field.IsValid() && field.Type().Implements(jsonUnmarshaler) {
 		switch val.Kind() {
 		case reflect.String:
 			return json.Unmarshal([]byte(`"`+val.String()+`"`), field.Interface())
@@ -82,6 +66,9 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 
 	switch field.Kind() {
 	case reflect.Ptr:
+		if field.IsNil() {
+			field.Set(reflect.New(field.Type().Elem()))
+		}
 		return reflectField(field.Elem(), val)
 	case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
 		switch val.Kind() {

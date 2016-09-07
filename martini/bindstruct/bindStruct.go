@@ -7,13 +7,13 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/asaskevich/govalidator"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/martini/errorJson"
 	"github.com/tsaikd/KDGoLib/structutil/reflectstruct"
 	"github.com/tsaikd/KDGoLib/structutil/trimstructspace"
+	"github.com/tsaikd/govalidator"
 )
 
 // BindConfig config for bind

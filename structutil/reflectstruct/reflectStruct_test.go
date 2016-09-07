@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/tsaikd/KDGoLib/enumutil"
 )
 
@@ -33,155 +33,68 @@ func (t *enum) UnmarshalJSON(b []byte) (err error) {
 }
 
 func Test_reflectField_simple_value(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
 
-	func() {
-		var field string
-		err := reflectField(
-			reflect.ValueOf(&field),
-			reflect.ValueOf(123),
-		)
-		if !assert.NoError(err) {
-			return
-		}
-		assert.EqualValues("123", field)
-	}()
+	var tmpstr string
+	var tmpint int
+	var tmpint64 int64
+	var tmpfloat64 float64
+	var tmpbool bool
+	var tmpenum enum
+	var tmptime time.Time
+	var tmpvar interface{}
 
-	func() {
-		var field int
-		err := reflectField(
-			reflect.ValueOf(&field),
-			reflect.ValueOf("123"),
-		)
-		if !assert.NoError(err) {
-			return
-		}
-		assert.EqualValues(123, field)
-	}()
+	now := time.Now()
 
-	func() {
-		var field int64
-		err := reflectField(
-			reflect.ValueOf(&field),
-			reflect.ValueOf(int8(123)),
-		)
-		if !assert.NoError(err) {
-			return
-		}
-		assert.EqualValues(123, field)
-	}()
+	// normal usage
+	for _, data := range []struct {
+		dest     reflect.Value
+		value    reflect.Value
+		expected interface{}
+	}{
+		{reflect.ValueOf(&tmpstr), reflect.ValueOf(false), "false"},
+		{reflect.ValueOf(&tmpstr), reflect.ValueOf(true), "true"},
+		{reflect.ValueOf(&tmpstr), reflect.ValueOf(int(123)), "123"},
+		{reflect.ValueOf(&tmpstr), reflect.ValueOf(float64(1.23)), "1.23"},
+		{reflect.ValueOf(&tmpint), reflect.ValueOf(false), int(0)},
+		{reflect.ValueOf(&tmpint), reflect.ValueOf(true), int(1)},
+		{reflect.ValueOf(&tmpint), reflect.ValueOf("123"), int(123)},
+		{reflect.ValueOf(&tmpint64), reflect.ValueOf(int8(123)), int64(123)},
+		{reflect.ValueOf(&tmpint64), reflect.ValueOf(float64(123)), int64(123)},
+		{reflect.ValueOf(&tmpfloat64), reflect.ValueOf(false), float64(0)},
+		{reflect.ValueOf(&tmpfloat64), reflect.ValueOf(true), float64(1)},
+		{reflect.ValueOf(&tmpfloat64), reflect.ValueOf("123"), float64(123)},
+		{reflect.ValueOf(&tmpfloat64), reflect.ValueOf(int8(123)), float64(123)},
+		{reflect.ValueOf(&tmpfloat64), reflect.ValueOf(float32(123)), float64(123)},
+		{reflect.ValueOf(&tmpbool), reflect.ValueOf("true"), true},
+		{reflect.ValueOf(&tmpbool), reflect.ValueOf(int(123)), true},
+		{reflect.ValueOf(&tmpbool), reflect.ValueOf(float32(123)), true},
+		{reflect.ValueOf(&tmpenum), reflect.ValueOf("test"), enumTest},
+		{reflect.ValueOf(&tmpenum), reflect.ValueOf(2), enum(2)},
+		{reflect.ValueOf(&tmptime), reflect.ValueOf(now), now},
+		{reflect.ValueOf(&tmpvar), reflect.ValueOf("text"), "text"},
+	} {
+		require.NoError(reflectField(data.dest, data.value))
+		require.Equal(data.expected, data.dest.Elem().Interface())
+	}
 
-	func() {
-		var field int64
-		err := reflectField(
-			reflect.ValueOf(&field),
-			reflect.ValueOf(float64(123)),
-		)
-		if !assert.NoError(err) {
-			return
-		}
-		assert.EqualValues(123, field)
-	}()
-
-	func() {
-		var field float64
-		err := reflectField(
-			reflect.ValueOf(&field),
-			reflect.ValueOf("123"),
-		)
-		if !assert.NoError(err) {
-			return
-		}
-		assert.EqualValues(123, field)
-	}()
-
-	func() {
-		var field float64
-		err := reflectField(
-			reflect.ValueOf(&field),
-			reflect.ValueOf(int8(123)),
-		)
-		if !assert.NoError(err) {
-			return
-		}
-		assert.EqualValues(123, field)
-	}()
-
-	func() {
-		var field float64
-		err := reflectField(
-			reflect.ValueOf(&field),
-			reflect.ValueOf(float32(123)),
-		)
-		if !assert.NoError(err) {
-			return
-		}
-		assert.EqualValues(123, field)
-	}()
-
-	func() {
-		var field bool
-		err := reflectField(
-			reflect.ValueOf(&field),
-			reflect.ValueOf("true"),
-		)
-		if !assert.NoError(err) {
-			return
-		}
-		assert.True(field)
-	}()
-
-	func() {
-		var field enum
-		err := reflectField(
-			reflect.ValueOf(&field),
-			reflect.ValueOf("test"),
-		)
-		if !assert.NoError(err) {
-			return
-		}
-		assert.Equal(enumTest, field)
-
-		err = reflectField(
-			reflect.ValueOf(&field),
-			reflect.ValueOf(2),
-		)
-		if !assert.NoError(err) {
-			return
-		}
-		assert.EqualValues(2, field)
-	}()
-
-	func() {
-		var field time.Time
-		now := time.Now()
-		err := reflectField(
-			reflect.ValueOf(&field),
-			reflect.ValueOf(now),
-		)
-		if !assert.NoError(err) {
-			return
-		}
-		assert.Equal(now, field)
-	}()
-
-	func() {
-		var field interface{}
-		err := reflectField(
-			reflect.ValueOf(&field),
-			reflect.ValueOf("text"),
-		)
-		if !assert.NoError(err) {
-			return
-		}
-		assert.Equal("text", field)
-	}()
+	// error usage
+	for _, data := range []struct {
+		dest  reflect.Value
+		value reflect.Value
+	}{
+		{reflect.ValueOf(&tmpbool), reflect.ValueOf("abc")},
+		{reflect.ValueOf(&tmpint), reflect.ValueOf("abc")},
+		{reflect.ValueOf(&tmpfloat64), reflect.ValueOf("abc")},
+	} {
+		require.Error(reflectField(data.dest, data.value))
+	}
 }
 
 func Test_reflectField_struct(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
 
 	func() {
 		var field struct {
@@ -209,17 +122,13 @@ func Test_reflectField_struct(t *testing.T) {
 				},
 			}),
 		)
-		if !assert.NoError(err) {
-			return
-		}
-		assert.Equal("text", field.Str)
-		assert.EqualValues(123, field.Int)
-		assert.Equal("intext", field.Inherit.InStr)
-		if !assert.Len(field.ChildSlice, 1) {
-			return
-		}
-		assert.Equal("text", field.ChildSlice[0].Str)
-		assert.EqualValues(123, field.ChildSlice[0].Int)
+		require.NoError(err)
+		require.Equal("text", field.Str)
+		require.EqualValues(123, field.Int)
+		require.Equal("intext", field.Inherit.InStr)
+		require.Len(field.ChildSlice, 1)
+		require.Equal("text", field.ChildSlice[0].Str)
+		require.EqualValues(123, field.ChildSlice[0].Int)
 	}()
 
 	func() {
@@ -248,22 +157,18 @@ func Test_reflectField_struct(t *testing.T) {
 				]
 			}
 		`)).Decode(&value)
-		assert.NoError(err)
+		require.NoError(err)
 		err = reflectField(
 			reflect.ValueOf(&field),
 			reflect.ValueOf(value),
 		)
-		if !assert.NoError(err) {
-			return
-		}
-		assert.Equal("text", field.Str)
-		assert.EqualValues(123, field.Int)
-		assert.Equal("intext", field.Inherit.InStr)
-		if !assert.Len(field.ChildSlice, 1) {
-			return
-		}
-		assert.Equal("text", field.ChildSlice[0].Str)
-		assert.EqualValues(123, field.ChildSlice[0].Int)
+		require.NoError(err)
+		require.Equal("text", field.Str)
+		require.EqualValues(123, field.Int)
+		require.Equal("intext", field.Inherit.InStr)
+		require.Len(field.ChildSlice, 1)
+		require.Equal("text", field.ChildSlice[0].Str)
+		require.EqualValues(123, field.ChildSlice[0].Int)
 	}()
 
 	func() {
@@ -306,23 +211,27 @@ func Test_reflectField_struct(t *testing.T) {
 				},
 			}),
 		)
-		if !assert.NoError(err) {
-			return
-		}
-		assert.Equal("text", field.Str)
-		assert.EqualValues(123, field.Int)
-		assert.Equal("intext", field.Inherit.InStr)
-		if !assert.Len(field.ChildSlice, 1) {
-			return
-		}
-		assert.Equal("text", field.ChildSlice[0].Str)
-		assert.EqualValues(123, field.ChildSlice[0].Int)
+		require.NoError(err)
+		require.Equal("text", field.Str)
+		require.EqualValues(123, field.Int)
+		require.Equal("intext", field.Inherit.InStr)
+		require.Len(field.ChildSlice, 1)
+		require.Equal("text", field.ChildSlice[0].Str)
+		require.EqualValues(123, field.ChildSlice[0].Int)
 	}()
 }
 
+func Test_ReflectStruct_nil(t *testing.T) {
+	require := require.New(t)
+	require.NotNil(require)
+
+	err := ReflectStruct(nil, nil)
+	require.NoError(err)
+}
+
 func Test_ReflectStruct_empty_nothing(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
 
 	obj := struct {
 		Text    string `json:"text"`
@@ -334,15 +243,15 @@ func Test_ReflectStruct_empty_nothing(t *testing.T) {
 		"nothing": 123,
 		"empty":   "null",
 	})
-	assert.NoError(err)
-	assert.Equal("abc", obj.Text)
-	assert.Empty(obj.Nothing)
-	assert.Empty(obj.Empty)
+	require.NoError(err)
+	require.Equal("abc", obj.Text)
+	require.Empty(obj.Nothing)
+	require.Empty(obj.Empty)
 }
 
 func Test_ReflectStruct_slice(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
 
 	obj := struct {
 		Text    string   `json:"text"`
@@ -352,20 +261,28 @@ func Test_ReflectStruct_slice(t *testing.T) {
 		Numbers []int64  `json:"numbers"`
 	}{}
 	requrl, err := url.Parse("http://localhost/test?text=abcde&number=123&slice=a&slice=b&numbers=1&numbers=2")
-	assert.NoError(err)
+	require.NoError(err)
 
 	err = ReflectStruct(&obj, requrl.Query())
-	assert.NoError(err)
-	assert.Equal("abcde", obj.Text)
-	assert.Equal(int64(123), obj.Number)
-	assert.Empty(obj.Empty)
-	assert.Equal([]string{"a", "b"}, obj.Slice)
-	assert.Equal([]int64{1, 2}, obj.Numbers)
+	require.NoError(err)
+	require.Equal("abcde", obj.Text)
+	require.Equal(int64(123), obj.Number)
+	require.Empty(obj.Empty)
+	require.Equal([]string{"a", "b"}, obj.Slice)
+	require.Equal([]int64{1, 2}, obj.Numbers)
+
+	obj2 := struct {
+		Empty string `json:"empty"`
+	}{}
+	require.NoError(ReflectStruct(&obj2, map[string]interface{}{
+		"empty": []string{},
+	}))
+	require.Empty(obj2.Empty)
 }
 
 func Test_ReflectStruct_pointer(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
 
 	obj := struct {
 		PtrStr  string `json:"ptrstr"`
@@ -376,37 +293,45 @@ func Test_ReflectStruct_pointer(t *testing.T) {
 		"ptrstr":  &ptrstr,
 		"str2int": "123",
 	})
-	assert.NoError(err)
-	assert.Equal("ptr", obj.PtrStr)
-	assert.Equal(123, obj.Str2Int)
+	require.NoError(err)
+	require.Equal("ptr", obj.PtrStr)
+	require.Equal(123, obj.Str2Int)
 }
 
 func Test_ReflectStruct_type(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
 
 	obj := struct {
-		Str            fakeString `json:"str"`
-		IntFromString  int64      `json:"intFromString"`
-		Bool           bool       `json:"bool"`
-		BoolFromString bool       `json:"boolFromString"`
+		Str               fakeString `json:"str"`
+		IntFromString     int64      `json:"intFromString"`
+		Bool              bool       `json:"bool"`
+		BoolFromString    bool       `json:"boolFromString"`
+		BoolPtr           *bool      `json:"boolPtr"`
+		BoolPtrFromString *bool      `json:"boolPtrFromString"`
 	}{}
 	err := ReflectStruct(&obj, map[string]interface{}{
-		"str":            "fakestring",
-		"intFromString":  "123",
-		"bool":           true,
-		"boolFromString": "true",
+		"str":               "fakestring",
+		"intFromString":     "123",
+		"bool":              true,
+		"boolFromString":    "true",
+		"boolPtr":           true,
+		"boolPtrFromString": "true",
 	})
-	assert.NoError(err)
-	assert.Equal(fakeString("fakestring"), obj.Str)
-	assert.EqualValues(123, obj.IntFromString)
-	assert.True(obj.Bool)
-	assert.True(obj.BoolFromString)
+	require.NoError(err)
+	require.Equal(fakeString("fakestring"), obj.Str)
+	require.EqualValues(123, obj.IntFromString)
+	require.True(obj.Bool)
+	require.True(obj.BoolFromString)
+	require.NotNil(obj.BoolPtr)
+	require.True(*obj.BoolPtr)
+	require.NotNil(obj.BoolPtrFromString)
+	require.True(*obj.BoolPtrFromString)
 }
 
 func Test_ReflectStruct_struct2struct(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
 
 	obj := struct {
 		Text    string   `json:"text"`
@@ -428,7 +353,7 @@ func Test_ReflectStruct_struct2struct(t *testing.T) {
 		Numbers: []int64{1, 2, 3},
 	}
 	err := ReflectStruct(&obj, obj2)
-	assert.NoError(err)
+	require.NoError(err)
 }
 
 type childStruct struct {
@@ -436,8 +361,8 @@ type childStruct struct {
 }
 
 func Test_ReflectStruct_tag_inherit(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
 
 	obj := struct {
 		childStruct `reflect:"inherit"`
@@ -453,15 +378,15 @@ func Test_ReflectStruct_tag_inherit(t *testing.T) {
 			"fieldText": "ghi",
 		},
 	})
-	assert.NoError(err)
-	assert.Equal("abc", obj.Text)
-	assert.Equal("def", obj.ChildString)
-	assert.Equal("ghi", obj.StructField.FieldText)
+	require.NoError(err)
+	require.Equal("abc", obj.Text)
+	require.Equal("def", obj.ChildString)
+	require.Equal("ghi", obj.StructField.FieldText)
 }
 
 func Test_ReflectStruct_tag_inherit_pointer(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
 
 	obj := struct {
 		*childStruct `reflect:"inherit"`
@@ -471,14 +396,14 @@ func Test_ReflectStruct_tag_inherit_pointer(t *testing.T) {
 		"text":        "abc",
 		"childstring": "def",
 	})
-	assert.NoError(err)
-	assert.Equal("abc", obj.Text)
-	assert.Equal("def", obj.ChildString)
+	require.NoError(err)
+	require.Equal("abc", obj.Text)
+	require.Equal("def", obj.ChildString)
 }
 
 func Test_ReflectStruct_enum(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
 
 	obj := struct {
 		EnumFromString enum `json:"enumFromString"`
@@ -488,7 +413,7 @@ func Test_ReflectStruct_enum(t *testing.T) {
 		"enumFromString": "test",
 		"enumFromBytes":  []byte(`"test"`),
 	})
-	assert.NoError(err)
-	assert.Equal(enumTest, obj.EnumFromString)
-	assert.Equal(enumTest, obj.EnumFromBytes)
+	require.NoError(err)
+	require.Equal(enumTest, obj.EnumFromString)
+	require.Equal(enumTest, obj.EnumFromBytes)
 }
