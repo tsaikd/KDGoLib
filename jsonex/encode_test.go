@@ -48,8 +48,7 @@ var optionalsExpected = `{
  "fr": 0,
  "br": false,
  "ur": 0,
- "str": {},
- "sto": {}
+ "str": {}
 }`
 
 func TestOmitEmpty(t *testing.T) {

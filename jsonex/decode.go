@@ -254,6 +254,9 @@ type decodeState struct {
 	nextscan   scanner // for calls to nextValue
 	savedError error
 	useNumber  bool
+
+	// extension
+	missingFieldAsError bool
 }
 
 // errPhase is used for errors that should not happen unless
@@ -671,6 +674,8 @@ func (d *decodeState) object(v reflect.Value) {
 					}
 					subv = subv.Field(i)
 				}
+			} else if d.missingFieldAsError {
+				d.saveError(&UnmarshalFieldError{string(key), v.Type(), reflect.StructField{Name: string(key)}})
 			}
 		}
 

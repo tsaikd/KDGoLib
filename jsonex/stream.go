@@ -35,6 +35,10 @@ func NewDecoder(r io.Reader) *Decoder {
 // Number instead of as a float64.
 func (dec *Decoder) UseNumber() { dec.d.useNumber = true }
 
+// MissingFieldAsError causes the Decoder to unmarshal a object into an struct{}
+// will return error instead of ignore.
+func (dec *Decoder) MissingFieldAsError() { dec.d.missingFieldAsError = true }
+
 // Decode reads the next JSON-encoded value from its
 // input and stores it in the value pointed to by v.
 //
