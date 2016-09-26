@@ -7,10 +7,13 @@ package jsonex
 import (
 	"bytes"
 	"encoding"
+	"errors"
 	"fmt"
 	"image"
+	"math"
 	"net"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -52,6 +55,8 @@ type tx struct {
 	x int
 }
 
+type u8 uint8
+
 // A type that can unmarshal itself.
 
 type unmarshaler struct {
@@ -68,16 +73,20 @@ type ustruct struct {
 }
 
 type unmarshalerText struct {
-	T bool
+	A, B string
 }
 
 // needed for re-marshaling tests
-func (u *unmarshalerText) MarshalText() ([]byte, error) {
-	return []byte(""), nil
+func (u unmarshalerText) MarshalText() ([]byte, error) {
+	return []byte(u.A + ":" + u.B), nil
 }
 
 func (u *unmarshalerText) UnmarshalText(b []byte) error {
-	*u = unmarshalerText{true} // All we need to see that UnmarshalText is called.
+	pos := bytes.Index(b, []byte(":"))
+	if pos == -1 {
+		return errors.New("missing separator")
+	}
+	u.A, u.B = string(b[:pos]), string(b[pos+1:])
 	return nil
 }
 
@@ -87,6 +96,29 @@ type ustructText struct {
 	M unmarshalerText
 }
 
+// u8marshal is an integer type that can marshal/unmarshal itself.
+type u8marshal uint8
+
+func (u8 u8marshal) MarshalText() ([]byte, error) {
+	return []byte(fmt.Sprintf("u%d", u8)), nil
+}
+
+var errMissingU8Prefix = errors.New("missing 'u' prefix")
+
+func (u8 *u8marshal) UnmarshalText(b []byte) error {
+	if !bytes.HasPrefix(b, []byte{'u'}) {
+		return errMissingU8Prefix
+	}
+	n, err := strconv.Atoi(string(b[1:]))
+	if err != nil {
+		return err
+	}
+	*u8 = u8marshal(n)
+	return nil
+}
+
+var _ encoding.TextUnmarshaler = (*u8marshal)(nil)
+
 var (
 	um0, um1 unmarshaler // target2 of unmarshaling
 	ump      = &um1
@@ -95,12 +127,16 @@ var (
 	umslicep = new([]unmarshaler)
 	umstruct = ustruct{unmarshaler{true}}
 
-	um0T, um1T unmarshalerText // target2 of unmarshaling
-	umpT       = &um1T
-	umtrueT    = unmarshalerText{true}
-	umsliceT   = []unmarshalerText{{true}}
-	umslicepT  = new([]unmarshalerText)
-	umstructT  = ustructText{unmarshalerText{true}}
+	um0T, um1T   unmarshalerText // target2 of unmarshaling
+	umpType      = &um1T
+	umtrueXY     = unmarshalerText{"x", "y"}
+	umsliceXY    = []unmarshalerText{{"x", "y"}}
+	umslicepType = new([]unmarshalerText)
+	umstructType = new(ustructText)
+	umstructXY   = ustructText{unmarshalerText{"x", "y"}}
+
+	ummapType = map[unmarshalerText]bool{}
+	ummapXY   = map[unmarshalerText]bool{unmarshalerText{"x", "y"}: true}
 )
 
 // Test data structures for anonymous fields.
@@ -202,15 +238,6 @@ type S13 struct {
 	S8
 }
 
-type unmarshalTest struct {
-	in                  string
-	ptr                 interface{}
-	out                 interface{}
-	err                 error
-	useNumber           bool
-	missingFieldAsError bool
-}
-
 type Ambig struct {
 	// Given "hello", the first match should win.
 	First  int `json:"HELLO"`
@@ -225,6 +252,127 @@ type XYZ struct {
 
 func sliceAddr(x []int) *[]int                 { return &x }
 func mapAddr(x map[string]int) *map[string]int { return &x }
+
+type byteWithMarshalJSON byte
+
+func (b byteWithMarshalJSON) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf(`"Z%.2x"`, byte(b))), nil
+}
+
+func (b *byteWithMarshalJSON) UnmarshalJSON(data []byte) error {
+	if len(data) != 5 || data[0] != '"' || data[1] != 'Z' || data[4] != '"' {
+		return fmt.Errorf("bad quoted string")
+	}
+	i, err := strconv.ParseInt(string(data[2:4]), 16, 8)
+	if err != nil {
+		return fmt.Errorf("bad hex")
+	}
+	*b = byteWithMarshalJSON(i)
+	return nil
+}
+
+type byteWithPtrMarshalJSON byte
+
+func (b *byteWithPtrMarshalJSON) MarshalJSON() ([]byte, error) {
+	return byteWithMarshalJSON(*b).MarshalJSON()
+}
+
+func (b *byteWithPtrMarshalJSON) UnmarshalJSON(data []byte) error {
+	return (*byteWithMarshalJSON)(b).UnmarshalJSON(data)
+}
+
+type byteWithMarshalText byte
+
+func (b byteWithMarshalText) MarshalText() ([]byte, error) {
+	return []byte(fmt.Sprintf(`Z%.2x`, byte(b))), nil
+}
+
+func (b *byteWithMarshalText) UnmarshalText(data []byte) error {
+	if len(data) != 3 || data[0] != 'Z' {
+		return fmt.Errorf("bad quoted string")
+	}
+	i, err := strconv.ParseInt(string(data[1:3]), 16, 8)
+	if err != nil {
+		return fmt.Errorf("bad hex")
+	}
+	*b = byteWithMarshalText(i)
+	return nil
+}
+
+type byteWithPtrMarshalText byte
+
+func (b *byteWithPtrMarshalText) MarshalText() ([]byte, error) {
+	return byteWithMarshalText(*b).MarshalText()
+}
+
+func (b *byteWithPtrMarshalText) UnmarshalText(data []byte) error {
+	return (*byteWithMarshalText)(b).UnmarshalText(data)
+}
+
+type intWithMarshalJSON int
+
+func (b intWithMarshalJSON) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf(`"Z%.2x"`, int(b))), nil
+}
+
+func (b *intWithMarshalJSON) UnmarshalJSON(data []byte) error {
+	if len(data) != 5 || data[0] != '"' || data[1] != 'Z' || data[4] != '"' {
+		return fmt.Errorf("bad quoted string")
+	}
+	i, err := strconv.ParseInt(string(data[2:4]), 16, 8)
+	if err != nil {
+		return fmt.Errorf("bad hex")
+	}
+	*b = intWithMarshalJSON(i)
+	return nil
+}
+
+type intWithPtrMarshalJSON int
+
+func (b *intWithPtrMarshalJSON) MarshalJSON() ([]byte, error) {
+	return intWithMarshalJSON(*b).MarshalJSON()
+}
+
+func (b *intWithPtrMarshalJSON) UnmarshalJSON(data []byte) error {
+	return (*intWithMarshalJSON)(b).UnmarshalJSON(data)
+}
+
+type intWithMarshalText int
+
+func (b intWithMarshalText) MarshalText() ([]byte, error) {
+	return []byte(fmt.Sprintf(`Z%.2x`, int(b))), nil
+}
+
+func (b *intWithMarshalText) UnmarshalText(data []byte) error {
+	if len(data) != 3 || data[0] != 'Z' {
+		return fmt.Errorf("bad quoted string")
+	}
+	i, err := strconv.ParseInt(string(data[1:3]), 16, 8)
+	if err != nil {
+		return fmt.Errorf("bad hex")
+	}
+	*b = intWithMarshalText(i)
+	return nil
+}
+
+type intWithPtrMarshalText int
+
+func (b *intWithPtrMarshalText) MarshalText() ([]byte, error) {
+	return intWithMarshalText(*b).MarshalText()
+}
+
+func (b *intWithPtrMarshalText) UnmarshalText(data []byte) error {
+	return (*intWithMarshalText)(b).UnmarshalText(data)
+}
+
+type unmarshalTest struct {
+	in        string
+	ptr       interface{}
+	out       interface{}
+	err       error
+	useNumber bool
+	golden    bool
+}
 
 var unmarshalTests = []unmarshalTest{
 	// basic types
@@ -243,7 +391,6 @@ var unmarshalTests = []unmarshalTest{
 	{in: "null", ptr: new(interface{}), out: nil},
 	{in: `{"X": [1,2,3], "Y": 4}`, ptr: new(T), out: T{Y: 4}, err: &UnmarshalTypeError{"array", reflect.TypeOf(""), 7}},
 	{in: `{"x": 1}`, ptr: new(tx), out: tx{}},
-	{in: `{"x": 1}`, ptr: new(tx), out: tx{}, err: &UnmarshalFieldError{"x", reflect.TypeOf(tx{}), reflect.StructField{Name: "x"}}, missingFieldAsError: true},
 	{in: `{"F1":1,"F2":2,"F3":3}`, ptr: new(V), out: V{F1: float64(1), F2: int32(2), F3: Number("3")}},
 	{in: `{"F1":1,"F2":2,"F3":3}`, ptr: new(V), out: V{F1: Number("1"), F2: int32(2), F3: Number("3")}, useNumber: true},
 	{in: `{"k1":1,"k2":"s","k3":[1,2.0,3e-3],"k4":{"kk1":"s","kk2":2}}`, ptr: new(interface{}), out: ifaceNumAsFloat64},
@@ -304,14 +451,81 @@ var unmarshalTests = []unmarshalTest{
 	{in: `{"T":false}`, ptr: &ump, out: &umtrue},
 	{in: `[{"T":false}]`, ptr: &umslice, out: umslice},
 	{in: `[{"T":false}]`, ptr: &umslicep, out: &umslice},
-	{in: `{"M":{"T":false}}`, ptr: &umstruct, out: umstruct},
+	{in: `{"M":{"T":"x:y"}}`, ptr: &umstruct, out: umstruct},
 
 	// UnmarshalText interface test
-	{in: `"X"`, ptr: &um0T, out: umtrueT}, // use "false" so test will fail if custom unmarshaler is not called
-	{in: `"X"`, ptr: &umpT, out: &umtrueT},
-	{in: `["X"]`, ptr: &umsliceT, out: umsliceT},
-	{in: `["X"]`, ptr: &umslicepT, out: &umsliceT},
-	{in: `{"M":"X"}`, ptr: &umstructT, out: umstructT},
+	{in: `"x:y"`, ptr: &um0T, out: umtrueXY},
+	{in: `"x:y"`, ptr: &umpType, out: &umtrueXY},
+	{in: `["x:y"]`, ptr: &umsliceXY, out: umsliceXY},
+	{in: `["x:y"]`, ptr: &umslicepType, out: &umsliceXY},
+	{in: `{"M":"x:y"}`, ptr: umstructType, out: umstructXY},
+
+	// integer-keyed map test
+	{
+		in:  `{"-1":"a","0":"b","1":"c"}`,
+		ptr: new(map[int]string),
+		out: map[int]string{-1: "a", 0: "b", 1: "c"},
+	},
+	{
+		in:  `{"0":"a","10":"c","9":"b"}`,
+		ptr: new(map[u8]string),
+		out: map[u8]string{0: "a", 9: "b", 10: "c"},
+	},
+	{
+		in:  `{"-9223372036854775808":"min","9223372036854775807":"max"}`,
+		ptr: new(map[int64]string),
+		out: map[int64]string{math.MinInt64: "min", math.MaxInt64: "max"},
+	},
+	{
+		in:  `{"18446744073709551615":"max"}`,
+		ptr: new(map[uint64]string),
+		out: map[uint64]string{math.MaxUint64: "max"},
+	},
+	{
+		in:  `{"0":false,"10":true}`,
+		ptr: new(map[uintptr]bool),
+		out: map[uintptr]bool{0: false, 10: true},
+	},
+
+	// Check that MarshalText and UnmarshalText take precedence
+	// over default integer handling in map keys.
+	{
+		in:  `{"u2":4}`,
+		ptr: new(map[u8marshal]int),
+		out: map[u8marshal]int{2: 4},
+	},
+	{
+		in:  `{"2":4}`,
+		ptr: new(map[u8marshal]int),
+		err: errMissingU8Prefix,
+	},
+
+	// integer-keyed map errors
+	{
+		in:  `{"abc":"abc"}`,
+		ptr: new(map[int]string),
+		err: &UnmarshalTypeError{"number abc", reflect.TypeOf(0), 2},
+	},
+	{
+		in:  `{"256":"abc"}`,
+		ptr: new(map[uint8]string),
+		err: &UnmarshalTypeError{"number 256", reflect.TypeOf(uint8(0)), 2},
+	},
+	{
+		in:  `{"128":"abc"}`,
+		ptr: new(map[int8]string),
+		err: &UnmarshalTypeError{"number 128", reflect.TypeOf(int8(0)), 2},
+	},
+	{
+		in:  `{"-1":"abc"}`,
+		ptr: new(map[uint8]string),
+		err: &UnmarshalTypeError{"number -1", reflect.TypeOf(uint8(0)), 2},
+	},
+
+	// Map keys can be encoding.TextUnmarshalers.
+	{in: `{"x:y":true}`, ptr: &ummapType, out: ummapXY},
+	// If multiple values for the same key exists, only the most recent value is used.
+	{in: `{"x:y":false,"x:y":true}`, ptr: &ummapType, out: ummapXY},
 
 	// Overwriting of data.
 	// This is different from package xml, but it's what we've always done.
@@ -428,11 +642,101 @@ var unmarshalTests = []unmarshalTest{
 		out: "hello\ufffd\ufffd\ufffd\ufffd\ufffd\ufffdworld",
 	},
 
-	// issue 8305
+	// Used to be issue 8305, but time.Time implements encoding.TextUnmarshaler so this works now.
 	{
 		in:  `{"2009-11-10T23:00:00Z": "hello world"}`,
 		ptr: &map[time.Time]string{},
-		err: &UnmarshalTypeError{"object", reflect.TypeOf(map[time.Time]string{}), 1},
+		out: map[time.Time]string{time.Date(2009, 11, 10, 23, 0, 0, 0, time.UTC): "hello world"},
+	},
+
+	// issue 8305
+	{
+		in:  `{"2009-11-10T23:00:00Z": "hello world"}`,
+		ptr: &map[Point]string{},
+		err: &UnmarshalTypeError{"object", reflect.TypeOf(map[Point]string{}), 1},
+	},
+	{
+		in:  `{"asdf": "hello world"}`,
+		ptr: &map[unmarshaler]string{},
+		err: &UnmarshalTypeError{"object", reflect.TypeOf(map[unmarshaler]string{}), 1},
+	},
+
+	// related to issue 13783.
+	// Go 1.7 changed marshaling a slice of typed byte to use the methods on the byte type,
+	// similar to marshaling a slice of typed int.
+	// These tests check that, assuming the byte type also has valid decoding methods,
+	// either the old base64 string encoding or the new per-element encoding can be
+	// successfully unmarshaled. The custom unmarshalers were accessible in earlier
+	// versions of Go, even though the custom marshaler was not.
+	{
+		in:  `"AQID"`,
+		ptr: new([]byteWithMarshalJSON),
+		out: []byteWithMarshalJSON{1, 2, 3},
+	},
+	{
+		in:     `["Z01","Z02","Z03"]`,
+		ptr:    new([]byteWithMarshalJSON),
+		out:    []byteWithMarshalJSON{1, 2, 3},
+		golden: true,
+	},
+	{
+		in:  `"AQID"`,
+		ptr: new([]byteWithMarshalText),
+		out: []byteWithMarshalText{1, 2, 3},
+	},
+	{
+		in:     `["Z01","Z02","Z03"]`,
+		ptr:    new([]byteWithMarshalText),
+		out:    []byteWithMarshalText{1, 2, 3},
+		golden: true,
+	},
+	{
+		in:  `"AQID"`,
+		ptr: new([]byteWithPtrMarshalJSON),
+		out: []byteWithPtrMarshalJSON{1, 2, 3},
+	},
+	{
+		in:     `["Z01","Z02","Z03"]`,
+		ptr:    new([]byteWithPtrMarshalJSON),
+		out:    []byteWithPtrMarshalJSON{1, 2, 3},
+		golden: true,
+	},
+	{
+		in:  `"AQID"`,
+		ptr: new([]byteWithPtrMarshalText),
+		out: []byteWithPtrMarshalText{1, 2, 3},
+	},
+	{
+		in:     `["Z01","Z02","Z03"]`,
+		ptr:    new([]byteWithPtrMarshalText),
+		out:    []byteWithPtrMarshalText{1, 2, 3},
+		golden: true,
+	},
+
+	// ints work with the marshaler but not the base64 []byte case
+	{
+		in:     `["Z01","Z02","Z03"]`,
+		ptr:    new([]intWithMarshalJSON),
+		out:    []intWithMarshalJSON{1, 2, 3},
+		golden: true,
+	},
+	{
+		in:     `["Z01","Z02","Z03"]`,
+		ptr:    new([]intWithMarshalText),
+		out:    []intWithMarshalText{1, 2, 3},
+		golden: true,
+	},
+	{
+		in:     `["Z01","Z02","Z03"]`,
+		ptr:    new([]intWithPtrMarshalJSON),
+		out:    []intWithPtrMarshalJSON{1, 2, 3},
+		golden: true,
+	},
+	{
+		in:     `["Z01","Z02","Z03"]`,
+		ptr:    new([]intWithPtrMarshalText),
+		out:    []intWithPtrMarshalText{1, 2, 3},
+		golden: true,
 	},
 }
 
@@ -552,9 +856,6 @@ func TestUnmarshal(t *testing.T) {
 		if tt.useNumber {
 			dec.UseNumber()
 		}
-		if tt.missingFieldAsError {
-			dec.MissingFieldAsError()
-		}
 		if err := dec.Decode(v.Interface()); !reflect.DeepEqual(err, tt.err) {
 			t.Errorf("#%d: %v, want %v", i, err, tt.err)
 			continue
@@ -570,12 +871,15 @@ func TestUnmarshal(t *testing.T) {
 			continue
 		}
 
-		// Check round trip.
+		// Check round trip also decodes correctly.
 		if tt.err == nil {
 			enc, err := Marshal(v.Interface())
 			if err != nil {
 				t.Errorf("#%d: error re-marshaling: %v", i, err)
 				continue
+			}
+			if tt.golden && !bytes.Equal(enc, in) {
+				t.Errorf("#%d: remarshal mismatch:\nhave: %s\nwant: %s", i, enc, in)
 			}
 			vv := reflect.New(reflect.TypeOf(tt.ptr).Elem())
 			dec = NewDecoder(bytes.NewReader(enc))
@@ -1275,7 +1579,7 @@ func TestSliceOfCustomByte(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(a, b) {
-		t.Fatal("expected %v == %v", a, b)
+		t.Fatalf("expected %v == %v", a, b)
 	}
 }
 
