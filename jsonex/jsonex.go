@@ -7,6 +7,10 @@ import (
 
 const ignoreTag = "-"
 
+type supportZero interface {
+	IsZero() bool
+}
+
 // IsEmpty return true if v is empty for supported types
 func IsEmpty(v interface{}) bool {
 	switch val := v.(type) {
@@ -70,6 +74,13 @@ func isDefaultValue(v reflect.Value, defaultTag string) bool {
 		}
 		return isDefaultValue(v.Elem(), defaultTag)
 	case reflect.Struct:
+		if v.CanInterface() {
+			switch fn := v.Interface().(type) {
+			case supportZero:
+				return fn.IsZero()
+			}
+		}
+
 		t := v.Type()
 		for i, n := 0, t.NumField(); i < n; i++ {
 			elemVal := v.Field(i)

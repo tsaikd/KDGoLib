@@ -304,8 +304,11 @@ func isEmptyValue(v reflect.Value) bool {
 		return isEmptyValue(v.Elem())
 	case reflect.Struct:
 		if v.CanInterface() {
-			if marshaler, ok := v.Interface().(Marshaler); ok {
-				if data, err := marshaler.MarshalJSON(); err == nil {
+			switch fn := v.Interface().(type) {
+			case supportZero:
+				return fn.IsZero()
+			case Marshaler:
+				if data, err := fn.MarshalJSON(); err == nil {
 					switch string(data) {
 					case "null", "{}", "[]":
 						return true
