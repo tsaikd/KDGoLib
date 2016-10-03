@@ -6,8 +6,10 @@ import (
 	"net/http"
 )
 
+// ETagHashFunc hash function for generate etag from response body
 type ETagHashFunc func(data []byte) string
 
+// ETagConfig config for ETag
 type ETagConfig struct {
 	MinBodyLength       int
 	EnableMethod        map[string]bool
@@ -17,6 +19,7 @@ type ETagConfig struct {
 	HashFunc            ETagHashFunc
 }
 
+// NewETagConfig return default ETagConfig
 func NewETagConfig() *ETagConfig {
 	return &ETagConfig{
 		MinBodyLength: 1024,
@@ -40,31 +43,37 @@ func NewETagConfig() *ETagConfig {
 	}
 }
 
+// SetMinBodyLength if response body size less than length, do not use etag
 func (t *ETagConfig) SetMinBodyLength(length int) *ETagConfig {
 	t.MinBodyLength = length
 	return t
 }
 
+// AddMethod allow request method for etag
 func (t *ETagConfig) AddMethod(method string) *ETagConfig {
 	t.EnableMethod[method] = true
 	return t
 }
 
+// AddStatus allow response status for etag
 func (t *ETagConfig) AddStatus(status int) *ETagConfig {
 	t.EnableStatus[status] = true
 	return t
 }
 
+// AddIgnoreHeaderExist ignore etag if header exist
 func (t *ETagConfig) AddIgnoreHeaderExist(header string, exist bool) *ETagConfig {
 	t.IgnoreIfHeaderExist[header] = exist
 	return t
 }
 
+// AddIgnoreHeaderValue ignore etag if header equal value
 func (t *ETagConfig) AddIgnoreHeaderValue(header string, value string) *ETagConfig {
 	t.IgnoreIfHeaderValue[header] = value
 	return t
 }
 
+// SetHashFunc set etag hash function
 func (t *ETagConfig) SetHashFunc(hashFunc ETagHashFunc) *ETagConfig {
 	t.HashFunc = hashFunc
 	return t

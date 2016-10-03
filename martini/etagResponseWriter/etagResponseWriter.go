@@ -6,6 +6,7 @@ import (
 	"github.com/go-martini/martini"
 )
 
+// ETagResponseWriter return martini Handler by ETagConfig
 func ETagResponseWriter(config *ETagConfig) martini.Handler {
 	if config == nil {
 		config = NewETagConfig()
@@ -48,11 +49,10 @@ func (t *etagResponseWriter) Write(b []byte) (int, error) {
 
 	if match, ok := t.req.Header["If-None-Match"]; ok && match[0] == etag {
 		t.WriteHeader(http.StatusNotModified)
-		b = []byte{}
-	} else {
-		t.Header().Set("ETag", etag)
+		return t.write(nil)
 	}
 
+	t.Header().Set("ETag", etag)
 	return t.write(b)
 }
 
@@ -99,6 +99,9 @@ func (t *etagResponseWriter) write(b []byte) (int, error) {
 	if !t.writeStatus && t.status > 0 {
 		t.rw.WriteHeader(t.status)
 		t.writeStatus = true
+	}
+	if b == nil || len(b) < 1 {
+		return 0, nil
 	}
 
 	return t.rw.Write(b)
