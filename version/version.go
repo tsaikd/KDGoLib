@@ -27,6 +27,27 @@ type Version struct {
 	Godeps    interface{} `json:"godeps,omitempty"`
 }
 
+func (t Version) String() string {
+	output := t.Version
+	if t.BuildTime != "" {
+		output += fmt.Sprintf(" [%s]", t.BuildTime)
+	}
+	if t.GitCommit != "" {
+		output += fmt.Sprintf(" (%s)", t.GitCommit)
+	}
+	return output
+}
+
+// JSON return version info with JSON format
+func (t Version) JSON() (output string, err error) {
+	var raw []byte
+	ver := Get()
+	if raw, err = json.MarshalIndent(ver, "", "\t"); err != nil {
+		return
+	}
+	return string(raw), nil
+}
+
 // Get return Version info
 func Get() (ver Version) {
 	var godeps interface{}
@@ -49,25 +70,12 @@ func Get() (ver Version) {
 
 // JSON return version info with JSON format
 func JSON() (output string, err error) {
-	var raw []byte
-	ver := Get()
-	if raw, err = json.MarshalIndent(ver, "", "\t"); err != nil {
-		return
-	}
-	output = string(raw)
-	return
+	return Get().JSON()
 }
 
 // String return version info with string format
 func String() (output string) {
-	output = VERSION
-	if BUILDTIME != "" {
-		output += fmt.Sprintf(" [%s]", BUILDTIME)
-	}
-	if GITCOMMIT != "" {
-		output += fmt.Sprintf(" (%s)", GITCOMMIT)
-	}
-	return
+	return Get().String()
 }
 
 func getExecModifyTime() (modtime time.Time, err error) {
