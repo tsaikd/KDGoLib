@@ -3,6 +3,7 @@ package pkgutil
 import (
 	"go/build"
 	"regexp"
+	"sort"
 )
 
 // PackageList contains Package info and support lookup efficiently
@@ -76,6 +77,28 @@ func (t *PackageList) LookupByName(name string) *build.Package {
 func (t *PackageList) Map() map[*build.Package]bool {
 	t.ensureInit()
 	return t.pkgpool
+}
+
+// Sorted return packages in slice form and sorted by package directory
+func (t *PackageList) Sorted() []*build.Package {
+	t.ensureInit()
+
+	keys := make([]string, len(t.dirpool))
+	i := 0
+	for k := range t.dirpool {
+		keys[i] = k
+		i++
+	}
+	sort.Strings(keys)
+
+	result := make([]*build.Package, len(t.dirpool))
+	i = 0
+	for _, k := range keys {
+		result[i] = t.dirpool[k]
+		i++
+	}
+
+	return result
 }
 
 // Len return length of PackageList

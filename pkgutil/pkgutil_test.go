@@ -40,23 +40,17 @@ func TestParsePackagePaths(t *testing.T) {
 	pkglist, err := ParsePackagePaths("")
 	require.NoError(err)
 	require.EqualValues(1, pkglist.Len())
-	for pkg := range pkglist.Map() {
-		require.True(strings.HasSuffix(pkg.ImportPath, "github.com/tsaikd/KDGoLib/pkgutil"))
-	}
+	require.True(strings.HasSuffix(pkglist.Sorted()[0].ImportPath, "github.com/tsaikd/KDGoLib/pkgutil"))
 
 	pkglist, err = ParsePackagePaths("", "..")
 	require.NoError(err)
 	require.EqualValues(1, pkglist.Len())
-	for pkg := range pkglist.Map() {
-		require.True(strings.HasSuffix(pkg.ImportPath, "github.com/tsaikd/KDGoLib"))
-	}
+	require.True(strings.HasSuffix(pkglist.Sorted()[0].ImportPath, "github.com/tsaikd/KDGoLib"))
 
 	pkglist, err = ParsePackagePaths("..", "github.com/tsaikd/KDGoLib")
 	require.NoError(err)
 	require.EqualValues(1, pkglist.Len())
-	for pkg := range pkglist.Map() {
-		require.True(strings.HasSuffix(pkg.ImportPath, "github.com/tsaikd/KDGoLib"))
-	}
+	require.True(strings.HasSuffix(pkglist.Sorted()[0].ImportPath, "github.com/tsaikd/KDGoLib"))
 
 	pkglist, err = ParsePackagePaths("..", "github.com/tsaikd/KDGoLib/...")
 	require.NoError(err)
