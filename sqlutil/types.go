@@ -2,7 +2,7 @@ package sqlutil
 
 import "database/sql/driver"
 
-// SQLStringSlice is type []string and implement SQL driver
+// SQLStringSlice is a type of []string and implement SQL driver
 type SQLStringSlice []string
 
 // Scan decode SQL value
@@ -31,6 +31,19 @@ func NewSQLStringSlice(s *[]string) *SQLStringSlice {
 	}
 	data := SQLStringSlice(*s)
 	return &data
+}
+
+// SQLStringSliceJSON is a type of []string and implement SQL driver
+type SQLStringSliceJSON []string
+
+// Scan decode SQL value
+func (t *SQLStringSliceJSON) Scan(value interface{}) (err error) {
+	return SQLScanJSON(t, value)
+}
+
+// Value return data for SQL
+func (t *SQLStringSliceJSON) Value() (value driver.Value, err error) {
+	return SQLValueJSON(t)
 }
 
 // SQLJsonMap general map type for SQL
