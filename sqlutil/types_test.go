@@ -2,9 +2,11 @@ package sqlutil
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tsaikd/KDGoLib/jsonex"
 )
 
 func TestSQLValueStringSlice(t *testing.T) {
@@ -57,4 +59,24 @@ func TestSQLJsonMap(t *testing.T) {
 	sqlv, err := value.Value()
 	require.NoError(err)
 	require.Equal([]byte(`{"k1":"str","k2":123}`), sqlv)
+}
+
+func TestSQLNullTime(t *testing.T) {
+	require := require.New(t)
+	require.NotNil(require)
+
+	value := SQLNullTime{}
+	data, err := jsonex.Marshal(value)
+	require.NoError(err)
+	require.Equal("null", string(data))
+
+	timeData, err := time.Now().MarshalJSON()
+	require.NoError(err)
+
+	err = jsonex.Unmarshal(timeData, &value)
+	require.NoError(err)
+
+	data, err = jsonex.Marshal(value)
+	require.NoError(err)
+	require.Equal(string(timeData), string(data))
 }
