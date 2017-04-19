@@ -3,6 +3,7 @@ package errorJson
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -27,12 +28,17 @@ func Test_String(t *testing.T) {
 	require.Contains(string(data), `404`)
 	require.Contains(string(data), `"test error 1"`)
 	require.Contains(string(data), `"test error 2"`)
-	require.Contains(string(data), `errorJson_test.go:19`)
+	if !strings.Contains(string(data), `errorJson_test.go:17`) {
+		require.Contains(string(data), `errorJson_test.go:20`)
+	}
+	if !strings.Contains(string(data), `errorJson_test.go:20`) {
+		require.Contains(string(data), `errorJson_test.go:17`)
+	}
 
 	store := map[string]interface{}{}
 	err = json.Unmarshal(data, &store)
 	require.NoError(err)
 	require.Equal(float64(404), store["status"])
 	require.Equal("test error 1", store["error"])
-	require.Contains(store["errorpath"], `errorJson_test.go:19`)
+	require.Contains(store["errorpath"], `errorJson_test.go:`)
 }

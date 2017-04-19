@@ -241,7 +241,9 @@ func buildReflectFieldInfo(fieldInfoMap map[string]reflect.Value, value reflect.
 			childValue := value.Field(i)
 			if childValue.Kind() == reflect.Ptr && childValue.IsNil() {
 				childValue = reflect.New(childValue.Type().Elem())
-				value.Field(i).Set(childValue)
+				if value.Field(i).CanSet() {
+					value.Field(i).Set(childValue)
+				}
 				childValue = childValue.Elem()
 			}
 			fieldInfoMap = buildReflectFieldInfo(fieldInfoMap, childValue)

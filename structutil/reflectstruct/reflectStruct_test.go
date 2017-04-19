@@ -356,7 +356,7 @@ func Test_ReflectStruct_struct2struct(t *testing.T) {
 	require.NoError(err)
 }
 
-type childStruct struct {
+type ChildStruct struct {
 	ChildString string `json:"childstring"`
 }
 
@@ -365,7 +365,7 @@ func Test_ReflectStruct_tag_inherit(t *testing.T) {
 	require.NotNil(require)
 
 	obj := struct {
-		childStruct `reflect:"inherit"`
+		ChildStruct `reflect:"inherit"`
 		Text        string `json:"text"`
 		StructField struct {
 			FieldText string `json:"fieldText"`
@@ -389,7 +389,7 @@ func Test_ReflectStruct_tag_inherit_pointer(t *testing.T) {
 	require.NotNil(require)
 
 	obj := struct {
-		*childStruct `reflect:"inherit"`
+		*ChildStruct `reflect:"inherit"`
 		Text         string `json:"text"`
 	}{}
 	err := ReflectStruct(&obj, map[string]interface{}{

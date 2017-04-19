@@ -40,10 +40,10 @@ func Test_ReflectStruct_struct2map_inherit(t *testing.T) {
 
 	obj := map[string]interface{}{}
 	obj2 := struct {
-		childStruct `reflect:"inherit"`
+		ChildStruct `reflect:"inherit"`
 		Text        string `json:"text"`
 	}{
-		childStruct: childStruct{
+		ChildStruct: ChildStruct{
 			ChildString: "child",
 		},
 		Text: "abc",
