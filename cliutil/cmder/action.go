@@ -92,6 +92,7 @@ func (t Actions) WrapMain(mainAction cli.ActionFunc) cli.ActionFunc {
 			return cli.ShowCommandHelp(c, args.First())
 		}
 
-		return cli.ShowAppHelp(c)
+		cli.ShowAppHelp(c)
+		return nil
 	})
 }
