@@ -1,6 +1,7 @@
 package cobrather
 
 import (
+	"context"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -20,9 +21,9 @@ type Module struct {
 	// Examples of how to use the command
 	Example string
 	// RunE: Run but returns an error
-	RunE func(cmd *cobra.Command, args []string) error
+	RunE func(ctx context.Context, cmd *cobra.Command, args []string) error
 	// PostRunE: PostRun but returns an error
-	PostRunE func(cmd *cobra.Command, args []string) error
+	PostRunE func(ctx context.Context, cmd *cobra.Command, args []string) error
 
 	// extend cobra.Command fields
 	GlobalFlags  []Flag
@@ -34,24 +35,31 @@ type Module struct {
 }
 
 // MustNewCommand create cobra.Command from Module
-func (t *Module) MustNewCommand() *cobra.Command {
+func (t *Module) MustNewCommand(ctx context.Context) *cobra.Command {
 	depModules := ListDeps(0, t)
 	depSelfModules := append(depModules, t)
 
 	command := &cobra.Command{
-		Use:      t.Use,
-		Aliases:  t.Aliases,
-		Short:    t.Short,
-		Long:     t.Long,
-		Example:  t.Example,
-		PreRunE:  GenRunE(depModules...),
-		RunE:     t.RunE,
-		PostRunE: GenPostRunE(depSelfModules...),
+		Use:     t.Use,
+		Aliases: t.Aliases,
+		Short:   t.Short,
+		Long:    t.Long,
+		Example: t.Example,
+		PreRunE: GenRunE(ctx, depModules...),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			select {
+			case <-ctx.Done():
+				return nil
+			default:
+			}
+			return t.RunE(ctx, cmd, args)
+		},
+		PostRunE: GenPostRunE(ctx, depSelfModules...),
 	}
 
 	for _, subcmd := range t.Commands {
 		subcmd.viper = t.viper
-		command.AddCommand(subcmd.MustNewCommand())
+		command.AddCommand(subcmd.MustNewCommand(ctx))
 	}
 
 	for _, module := range depSelfModules {
@@ -66,12 +74,12 @@ func (t *Module) MustNewCommand() *cobra.Command {
 }
 
 // MustNewRootCommand create cobra.Command from Module for root application
-func (t *Module) MustNewRootCommand(vr *viper.Viper) *cobra.Command {
+func (t *Module) MustNewRootCommand(ctx context.Context, vr *viper.Viper) *cobra.Command {
 	t.viper = vr
 	if t.viper == nil {
 		t.viper = viper.New()
 	}
-	command := t.MustNewCommand()
+	command := t.MustNewCommand(ctx)
 
 	modules := append(ListDeps(OIncludeCommand, t), t)
 	for _, module := range modules {
@@ -88,6 +96,9 @@ func (t *Module) MustNewRootCommand(vr *viper.Viper) *cobra.Command {
 // MainRunOption option for Module.MustMainRun
 type MainRunOption interface{}
 
+// MainRunOptionContext config Context interface for running commands
+type MainRunOptionContext context.Context
+
 // MainRunOptionViper config Viper
 type MainRunOptionViper *viper.Viper
 
@@ -97,10 +108,13 @@ type MainRunOptionSilenceUsage bool
 // MustMainRun used for main package to run main module
 func (t *Module) MustMainRun(options ...MainRunOption) {
 	var vr *viper.Viper
+	ctx := context.Background()
 	SilenceUsage := true
 
 	for _, option := range options {
 		switch opt := option.(type) {
+		case MainRunOptionContext:
+			ctx = opt
 		case MainRunOptionViper:
 			vr = opt
 		case MainRunOptionSilenceUsage:
@@ -108,7 +122,7 @@ func (t *Module) MustMainRun(options ...MainRunOption) {
 		}
 	}
 
-	command := t.MustNewRootCommand(vr)
+	command := t.MustNewRootCommand(ctx, vr)
 	command.SilenceUsage = SilenceUsage
 	if err := command.Execute(); err != nil {
 		os.Exit(-1)
@@ -116,14 +130,14 @@ func (t *Module) MustMainRun(options ...MainRunOption) {
 }
 
 // GenRunE generate RunE for all modules
-func GenRunE(modules ...*Module) func(cmd *cobra.Command, args []string) error {
+func GenRunE(ctx context.Context, modules ...*Module) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) (err error) {
 		walked := map[*Module]bool{}
 		for _, module := range modules {
 			if !walked[module] {
 				walked[module] = true
 				if module.RunE != nil {
-					if err = module.RunE(cmd, args); err != nil {
+					if err = module.RunE(ctx, cmd, args); err != nil {
 						return
 					}
 				}
@@ -134,7 +148,7 @@ func GenRunE(modules ...*Module) func(cmd *cobra.Command, args []string) error {
 }
 
 // GenPostRunE generate PostRunE for all modules, start from tail to head
-func GenPostRunE(modules ...*Module) func(cmd *cobra.Command, args []string) error {
+func GenPostRunE(ctx context.Context, modules ...*Module) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) (err error) {
 		walked := map[*Module]bool{}
 		for i := len(modules) - 1; i >= 0; i-- {
@@ -142,7 +156,7 @@ func GenPostRunE(modules ...*Module) func(cmd *cobra.Command, args []string) err
 			if !walked[module] {
 				walked[module] = true
 				if module.PostRunE != nil {
-					if err = module.PostRunE(cmd, args); err != nil {
+					if err = module.PostRunE(ctx, cmd, args); err != nil {
 						return
 					}
 				}

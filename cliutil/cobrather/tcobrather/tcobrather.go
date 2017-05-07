@@ -1,14 +1,16 @@
 package tcobrather
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 	"github.com/tsaikd/KDGoLib/cliutil/cobrather"
 )
 
 // NewTest create TestModule instance
-func NewTest(module *cobrather.Module) *TestModule {
+func NewTest(ctx context.Context, module *cobrather.Module) *TestModule {
 	return &TestModule{
-		command: module.MustNewRootCommand(nil),
+		command: module.MustNewRootCommand(ctx, nil),
 	}
 }
 

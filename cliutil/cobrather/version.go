@@ -1,6 +1,7 @@
 package cobrather
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -44,7 +45,7 @@ version -c ">=0.3.5 , <1"
 		flagNumber,
 		flagContains,
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
 		return showVersion(flagNumber.Bool(), flagContains.String())
 	},
 }

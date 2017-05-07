@@ -1,6 +1,7 @@
 package cobrather_test
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -8,9 +9,10 @@ import (
 )
 
 func ExampleListDeps() {
+	ctx := context.Background()
 	createModule := func(name string) *cobrather.Module {
 		return &cobrather.Module{
-			RunE: func(cmd *cobra.Command, args []string) error {
+			RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
 				fmt.Println(name)
 				return nil
 			},
@@ -40,7 +42,7 @@ func ExampleListDeps() {
 
 	fmt.Println("only list dependencies of modRoot")
 	for _, module := range cobrather.ListDeps(0, modRoot) {
-		if err := module.RunE(nil, []string{}); err != nil {
+		if err := module.RunE(ctx, nil, []string{}); err != nil {
 			fmt.Println(err)
 		}
 	}
@@ -48,7 +50,7 @@ func ExampleListDeps() {
 
 	fmt.Println("list all dependencies of modRoot, include commands")
 	for _, module := range cobrather.ListDeps(cobrather.OIncludeCommand, modRoot) {
-		if err := module.RunE(nil, []string{}); err != nil {
+		if err := module.RunE(ctx, nil, []string{}); err != nil {
 			fmt.Println(err)
 		}
 	}
@@ -56,7 +58,7 @@ func ExampleListDeps() {
 
 	fmt.Println("list all dependencies of modRoot, include dependencies in commands, except commands")
 	for _, module := range cobrather.ListDeps(cobrather.OIncludeDepInCommand, modRoot) {
-		if err := module.RunE(nil, []string{}); err != nil {
+		if err := module.RunE(ctx, nil, []string{}); err != nil {
 			fmt.Println(err)
 		}
 	}

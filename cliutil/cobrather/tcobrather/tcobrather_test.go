@@ -1,6 +1,7 @@
 package tcobrather
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -22,11 +23,11 @@ func Example() {
 		Flags: []cobrather.Flag{
 			flagDepArg,
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
 			fmt.Println("root dep1 dep start", flagDepArg.String())
 			return nil
 		},
-		PostRunE: func(cmd *cobra.Command, args []string) error {
+		PostRunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
 			fmt.Println("root dep1 dep close")
 			return nil
 		},
@@ -35,21 +36,21 @@ func Example() {
 		Dependencies: []*cobrather.Module{
 			moduleRootDep1Dep,
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
 			fmt.Println("root dep1 start")
 			return nil
 		},
-		PostRunE: func(cmd *cobra.Command, args []string) error {
+		PostRunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
 			fmt.Println("root dep1 close")
 			return nil
 		},
 	}
 	moduleRootDep2 := &cobrather.Module{
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
 			fmt.Println("root dep2 start")
 			return nil
 		},
-		PostRunE: func(cmd *cobra.Command, args []string) error {
+		PostRunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
 			fmt.Println("root dep2 close")
 			return nil
 		},
@@ -62,11 +63,11 @@ func Example() {
 		Flags: []cobrather.Flag{
 			flagRootArg,
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
 			fmt.Println("root start", flagRootArg.String())
 			return nil
 		},
-		PostRunE: func(cmd *cobra.Command, args []string) error {
+		PostRunE: func(ctx context.Context, cmd *cobra.Command, args []string) error {
 			fmt.Println("root close")
 			return nil
 		},
@@ -75,7 +76,8 @@ func Example() {
 	if err := os.Setenv("DEPARG", "dep arg config"); err != nil {
 		fmt.Println(err)
 	}
-	testmod := NewTest(moduleRoot)
+	ctx := context.Background()
+	testmod := NewTest(ctx, moduleRoot)
 	if err := testmod.Setup(); err != nil {
 		fmt.Println(err)
 	}
