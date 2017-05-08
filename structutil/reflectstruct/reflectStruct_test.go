@@ -229,6 +229,19 @@ func Test_ReflectStruct_nil(t *testing.T) {
 	require.NoError(err)
 }
 
+func Test_ReflectStruct_error(t *testing.T) {
+	require := require.New(t)
+	require.NotNil(require)
+
+	obj := struct {
+		Text string `json:"text"`
+	}{}
+	err := ReflectStruct(obj, map[string]interface{}{
+		"text": "abc",
+	})
+	require.Error(err)
+}
+
 func Test_ReflectStruct_empty_nothing(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)

@@ -15,6 +15,7 @@ import (
 var (
 	ErrorUnknownSourceMapKeyType1       = errutil.NewFactory("unknown source map key type: %v")
 	ErrorUnsupportedReflectFieldMethod2 = errutil.NewFactory("unsupported reflect field method: %v <- %v")
+	ErrorFieldCanNotSet                 = errutil.NewFactory("field can not set")
 )
 
 var (
@@ -67,6 +68,9 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 	switch field.Kind() {
 	case reflect.Ptr:
 		if field.IsNil() {
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
+			}
 			field.Set(reflect.New(field.Type().Elem()))
 		}
 		return reflectField(field.Elem(), val)
@@ -78,15 +82,27 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 			if v, err = strconv.ParseInt(valstr, 0, 64); err != nil {
 				return
 			}
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
+			}
 			field.SetInt(v)
 			return
 		case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
+			}
 			field.SetInt(val.Int())
 			return
 		case reflect.Float64, reflect.Float32:
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
+			}
 			field.SetInt(int64(val.Float()))
 			return
 		case reflect.Bool:
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
+			}
 			if val.Bool() {
 				field.SetInt(1)
 			} else {
@@ -102,15 +118,27 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 			if v, err = strconv.ParseFloat(valstr, 64); err != nil {
 				return
 			}
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
+			}
 			field.SetFloat(v)
 			return
 		case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
+			}
 			field.SetFloat(float64(val.Int()))
 			return
 		case reflect.Float64, reflect.Float32:
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
+			}
 			field.SetFloat(val.Float())
 			return
 		case reflect.Bool:
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
+			}
 			if val.Bool() {
 				field.SetFloat(1)
 			} else {
@@ -126,30 +154,54 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 			if v, err = govalidator.ToBoolean(valstr); err != nil {
 				return
 			}
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
+			}
 			field.SetBool(v)
 			return
 		case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
+			}
 			field.SetBool(val.Int() > 0)
 			return
 		case reflect.Float64, reflect.Float32:
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
+			}
 			field.SetBool(val.Float() > 0)
 			return
 		case reflect.Bool:
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
+			}
 			field.SetBool(val.Bool())
 			return
 		}
 	case reflect.String:
 		switch val.Kind() {
 		case reflect.String:
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
+			}
 			field.SetString(val.String())
 			return
 		case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
+			}
 			field.SetString(strconv.FormatInt(val.Int(), 10))
 			return
 		case reflect.Float64, reflect.Float32:
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
+			}
 			field.SetString(strconv.FormatFloat(val.Float(), 'f', -1, 64))
 			return
 		case reflect.Bool:
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
+			}
 			field.SetString(strconv.FormatBool(val.Bool()))
 			return
 		}
@@ -162,6 +214,9 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 				if err = reflectField(vals.Index(i), val.Index(i)); err != nil {
 					return
 				}
+			}
+			if !field.CanSet() {
+				return ErrorFieldCanNotSet.New(nil)
 			}
 			field.Set(vals)
 			return
@@ -188,6 +243,9 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 			return
 		case reflect.Struct:
 			if val.Type().AssignableTo(field.Type()) {
+				if !field.CanSet() {
+					return ErrorFieldCanNotSet.New(nil)
+				}
 				field.Set(val)
 				return
 			}
@@ -205,12 +263,18 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 			return
 		}
 	case reflect.Interface:
+		if !field.CanSet() {
+			return ErrorFieldCanNotSet.New(nil)
+		}
 		field.Set(val)
 		return
 	case reflect.Map:
 		switch val.Kind() {
 		case reflect.Map:
 			if !val.IsNil() {
+				if !field.CanSet() {
+					return ErrorFieldCanNotSet.New(nil)
+				}
 				field.Set(val)
 			}
 			return
