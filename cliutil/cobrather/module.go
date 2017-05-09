@@ -47,6 +47,9 @@ func (t *Module) MustNewCommand(ctx context.Context) *cobra.Command {
 		Example: t.Example,
 		PreRunE: GenRunE(ctx, depModules...),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if t.RunE == nil {
+				return nil
+			}
 			select {
 			case <-ctx.Done():
 				return nil
