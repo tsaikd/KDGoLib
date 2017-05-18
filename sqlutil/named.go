@@ -1,6 +1,7 @@
 package sqlutil
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/tsaikd/KDGoLib/errutil"
@@ -29,6 +30,23 @@ func NamedExec(
 	return result, nil
 }
 
+// NamedExecContext prepare named SQL statement and call Exec function with context
+func NamedExecContext(
+	ctx context.Context,
+	tx dbtypes.Named,
+	query string,
+	arg interface{},
+) (result sql.Result, err error) {
+	stmt, err := tx.PrepareNamed(query)
+	if err != nil {
+		return result, ErrorPrepareNamed.New(err)
+	}
+	if result, err = stmt.ExecContext(ctx, arg); err != nil {
+		return result, wrapError(err)
+	}
+	return result, nil
+}
+
 // NamedExecStrict like NamedExec, but result rows affected should greater than zero
 func NamedExecStrict(
 	tx dbtypes.Named,
@@ -36,6 +54,26 @@ func NamedExecStrict(
 	arg interface{},
 ) (result sql.Result, err error) {
 	if result, err = NamedExec(tx, query, arg); err != nil {
+		return result, err
+	}
+	num, err := result.RowsAffected()
+	if err != nil {
+		return result, err
+	}
+	if num < 1 {
+		return result, ErrorNoRowAffected.New(nil)
+	}
+	return result, nil
+}
+
+// NamedExecStrictContext like NamedExecContext, but result rows affected should greater than zero
+func NamedExecStrictContext(
+	ctx context.Context,
+	tx dbtypes.Named,
+	query string,
+	arg interface{},
+) (result sql.Result, err error) {
+	if result, err = NamedExecContext(ctx, tx, query, arg); err != nil {
 		return result, err
 	}
 	num, err := result.RowsAffected()
@@ -65,6 +103,24 @@ func NamedGet(
 	return nil
 }
 
+// NamedGetContext prepare named SQL statement and call Get function with context
+func NamedGetContext(
+	ctx context.Context,
+	tx dbtypes.Named,
+	dest interface{},
+	query string,
+	arg interface{},
+) (err error) {
+	stmt, err := tx.PrepareNamed(query)
+	if err != nil {
+		return ErrorPrepareNamed.New(err)
+	}
+	if err = stmt.GetContext(ctx, dest, arg); err != nil {
+		return wrapError(err)
+	}
+	return nil
+}
+
 // NamedSelect prepare named SQL statement and call Select function
 func NamedSelect(
 	tx dbtypes.Named,
@@ -77,6 +133,24 @@ func NamedSelect(
 		return ErrorPrepareNamed.New(err)
 	}
 	if err = stmt.Select(dest, arg); err != nil {
+		return wrapError(err)
+	}
+	return nil
+}
+
+// NamedSelectContext prepare named SQL statement and call Select function with context
+func NamedSelectContext(
+	ctx context.Context,
+	tx dbtypes.Named,
+	dest interface{},
+	query string,
+	arg interface{},
+) (err error) {
+	stmt, err := tx.PrepareNamed(query)
+	if err != nil {
+		return ErrorPrepareNamed.New(err)
+	}
+	if err = stmt.SelectContext(ctx, dest, arg); err != nil {
 		return wrapError(err)
 	}
 	return nil
