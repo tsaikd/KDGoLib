@@ -8,13 +8,13 @@
 // We benchmark converting between the JSON form
 // and in-memory data structures.
 
-package json
+package jsonex
 
 import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"internal/testenv"
+	"gointernal/testenv"
 	"io/ioutil"
 	"os"
 	"reflect"
