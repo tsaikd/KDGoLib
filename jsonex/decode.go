@@ -273,6 +273,9 @@ type decodeState struct {
 	}
 	savedError error
 	useNumber  bool
+
+	// extension
+	missingFieldAsError bool
 }
 
 // errPhase is used for errors that should not happen unless
@@ -709,6 +712,8 @@ func (d *decodeState) object(v reflect.Value) {
 				}
 				d.errorContext.Field = f.name
 				d.errorContext.Struct = v.Type().Name()
+			} else if d.missingFieldAsError {
+				d.saveError(&UnmarshalFieldError{string(key), v.Type(), reflect.StructField{Name: string(key)}})
 			}
 		}
 

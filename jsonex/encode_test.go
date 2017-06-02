@@ -51,8 +51,7 @@ var optionalsExpected = `{
  "fr": 0,
  "br": false,
  "ur": 0,
- "str": {},
- "sto": {}
+ "str": {}
 }`
 
 func TestOmitEmpty(t *testing.T) {
@@ -771,9 +770,9 @@ func TestMarshalRawMessageValue(t *testing.T) {
 		{map[string]interface{}{"M": &rawNil}, `{"M":null}`, true},
 		{&map[string]interface{}{"M": &rawNil}, `{"M":null}`, true},
 		{T1{rawNil}, "{}", true},
-		{T2{&rawNil}, `{"M":null}`, true},
+		{T2{&rawNil}, `{}`, true},
 		{&T1{rawNil}, "{}", true},
-		{&T2{&rawNil}, `{"M":null}`, true},
+		{&T2{&rawNil}, `{}`, true},
 
 		// Test with empty, but non-nil, RawMessage.
 		{rawEmpty, "", false},
@@ -791,9 +790,9 @@ func TestMarshalRawMessageValue(t *testing.T) {
 		{map[string]interface{}{"nil": &rawEmpty}, "", false},
 		{&map[string]interface{}{"nil": &rawEmpty}, "", false},
 		{T1{rawEmpty}, "{}", true},
-		{T2{&rawEmpty}, "", false},
+		{T2{&rawEmpty}, "{}", true},
 		{&T1{rawEmpty}, "{}", true},
-		{&T2{&rawEmpty}, "", false},
+		{&T2{&rawEmpty}, "{}", true},
 
 		// Test with RawMessage with some text.
 		//
