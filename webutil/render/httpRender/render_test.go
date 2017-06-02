@@ -73,7 +73,13 @@ func TestRender(t *testing.T) {
 			Domain:   "localhost",
 			HttpOnly: true,
 		})
-		require.Equal("testcookie=test cookie value; Domain=localhost; HttpOnly", r.GetResponseHeader().Get("Set-Cookie"))
+		if cookie := r.GetResponseHeader().Get("Set-Cookie"); assert.NotEmpty(cookie) {
+			// in go dev: cookie will be `testcookie="test cookie value"; Domain=localhost; HttpOnly`
+			// require.Equal("testcookie=test cookie value; Domain=localhost; HttpOnly", cookie)
+			require.Contains(cookie, "testcookie=")
+			require.Contains(cookie, "test cookie value")
+			require.Contains(cookie, "Domain=localhost; HttpOnly")
+		}
 		r.JSON(nil)
 		require.Nil(r.GetError())
 		require.Equal(http.StatusOK, r.GetStatus())
