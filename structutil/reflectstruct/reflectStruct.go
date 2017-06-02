@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/tsaikd/KDGoLib/errutil"
+	"github.com/tsaikd/KDGoLib/jsonex"
 	"github.com/tsaikd/KDGoLib/reflectutil"
 	"github.com/tsaikd/govalidator"
 )
@@ -261,6 +262,10 @@ func reflectField(field reflect.Value, val reflect.Value) (err error) {
 				}
 			}
 			return
+		case reflect.String:
+			if field.CanAddr() && field.Addr().CanInterface() && field.Addr().Interface() != nil {
+				return jsonex.Unmarshal([]byte(val.String()), field.Addr().Interface())
+			}
 		}
 	case reflect.Interface:
 		if !field.CanSet() {

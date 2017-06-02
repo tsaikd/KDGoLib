@@ -219,6 +219,36 @@ func Test_reflectField_struct(t *testing.T) {
 		require.Equal("text", field.ChildSlice[0].Str)
 		require.EqualValues(123, field.ChildSlice[0].Int)
 	}()
+
+	func() {
+		var field struct {
+			Str     string `json:"str"`
+			Int     int    `json:"int"`
+			Inherit struct {
+				InStr string `json:"instr"`
+			} `reflect:"inherit"`
+			ChildSlice []struct {
+				ChildStr string `json:"child_str"`
+				ChildInt int    `json:"child_int"`
+			} `json:"childslice"`
+		}
+		err := reflectField(
+			reflect.ValueOf(&field),
+			reflect.ValueOf(map[string][]string{
+				"str":        []string{"text"},
+				"int":        []string{"123"},
+				"instr":      []string{"intext"},
+				"childslice": []string{`{"child_str":"text","child_int":123}`},
+			}),
+		)
+		require.NoError(err)
+		require.Equal("text", field.Str)
+		require.EqualValues(123, field.Int)
+		require.Equal("intext", field.Inherit.InStr)
+		require.Len(field.ChildSlice, 1)
+		require.Equal("text", field.ChildSlice[0].ChildStr)
+		require.EqualValues(123, field.ChildSlice[0].ChildInt)
+	}()
 }
 
 func Test_ReflectStruct_nil(t *testing.T) {
