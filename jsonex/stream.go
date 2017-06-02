@@ -35,10 +35,6 @@ func NewDecoder(r io.Reader) *Decoder {
 // Number instead of as a float64.
 func (dec *Decoder) UseNumber() { dec.d.useNumber = true }
 
-// MissingFieldAsError causes the Decoder to unmarshal a object into an struct{}
-// will return error instead of ignore.
-func (dec *Decoder) MissingFieldAsError() { dec.d.missingFieldAsError = true }
-
 // Decode reads the next JSON-encoded value from its
 // input and stores it in the value pointed to by v.
 //
@@ -250,9 +246,12 @@ func (enc *Encoder) SetEscapeHTML(on bool) {
 // be used to delay JSON decoding or precompute a JSON encoding.
 type RawMessage []byte
 
-// MarshalJSON returns *m as the JSON encoding of m.
-func (m *RawMessage) MarshalJSON() ([]byte, error) {
-	return *m, nil
+// MarshalJSON returns m as the JSON encoding of m.
+func (m RawMessage) MarshalJSON() ([]byte, error) {
+	if m == nil {
+		return []byte("null"), nil
+	}
+	return m, nil
 }
 
 // UnmarshalJSON sets *m to a copy of data.
