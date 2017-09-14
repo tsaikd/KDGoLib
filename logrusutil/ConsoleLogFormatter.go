@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/errutil"
@@ -47,7 +48,7 @@ func (t *ConsoleLogFormatter) Format(entry *logrus.Entry) (data []byte, err erro
 	}
 
 	if t.TimestampFormat == "" {
-		t.TimestampFormat = logrus.DefaultTimestampFormat
+		t.TimestampFormat = time.RFC3339
 	}
 
 	if t.Flag&Ltime != 0 {
