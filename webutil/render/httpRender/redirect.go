@@ -3,12 +3,12 @@ package httpRender
 import "net/http"
 
 func (t *renderImpl) Redirect(status int, location string) {
-	if !expectWritten(t, false) {
+	if !t.expectWritten(false) {
 		return
 	}
 	t.written = true
 
-	if !expectStatus(t, 0) {
+	if !t.expectStatus(0) {
 		return
 	}
 	t.status = status

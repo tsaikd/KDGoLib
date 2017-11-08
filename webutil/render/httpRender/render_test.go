@@ -99,12 +99,16 @@ func TestRender(t *testing.T) {
 
 	if w := httptest.NewRecorder(); assert.NotNil(w) {
 		r := httpRender.New(w, req)
-		_, err := r.GetIOWriter().Write([]byte("part1"))
+		writer := r.GetResponseWriter()
+		writer.Header().Set("custom-header", "custom header value")
+		writer.WriteHeader(http.StatusOK)
+		_, err := writer.Write([]byte("part1"))
 		require.NoError(err)
-		_, err = r.GetIOWriter().Write([]byte("part2"))
+		_, err = writer.Write([]byte("part2"))
 		require.NoError(err)
 		require.Nil(r.GetError())
 		require.Equal(http.StatusOK, r.GetStatus())
+		require.Equal("custom header value", w.Header().Get("custom-header"))
 		require.Equal([]byte("part1part2"), r.GetBody())
 	}
 

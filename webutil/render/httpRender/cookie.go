@@ -6,7 +6,7 @@ func (t *renderImpl) SetCookie(cookie *http.Cookie) {
 	if cookie == nil {
 		return
 	}
-	if !expectWritten(t, false) {
+	if !t.expectWritten(false) {
 		return
 	}
 	http.SetCookie(t.w, cookie)

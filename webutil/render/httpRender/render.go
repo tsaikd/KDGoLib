@@ -22,7 +22,6 @@ type Render interface {
 	render.Response
 	render.Status
 	render.Write
-	render.Writer
 }
 
 // New return render instance
@@ -40,11 +39,10 @@ func New(w http.ResponseWriter, req *http.Request, options ...Option) Render {
 	}
 
 	return &renderImpl{
-		w:                       w,
-		req:                     req,
-		buffer:                  &bytes.Buffer{},
-		maxBufferSize:           maxBufferSize,
+		w:   w,
+		req: req,
 		errorPathTrimPrefixList: errorPathTrimPrefixList,
+		maxBufferSize:           maxBufferSize,
 	}
 }
 
@@ -58,15 +56,16 @@ type OptionMaxBufferSize int64
 type OptionErrorPathTrimPrefix string
 
 type renderImpl struct {
-	w                       http.ResponseWriter
-	req                     *http.Request
-	buffer                  *bytes.Buffer
-	maxBufferSize           int64
+	w   http.ResponseWriter
+	req *http.Request
+
 	errorPathTrimPrefixList []string
+	maxBufferSize           int64
 
 	written      bool
-	status       int
 	size         int64
+	status       int
 	err          error
 	lastModified time.Time
+	buffer       bytes.Buffer
 }

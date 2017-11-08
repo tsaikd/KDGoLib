@@ -1,8 +1,6 @@
 package httpRender
 
 import (
-	"bytes"
-	"io"
 	"net/http"
 	"runtime/debug"
 
@@ -22,7 +20,7 @@ const (
 )
 
 func (t *renderImpl) WriteResponse(header http.Header, status int, data interface{}) {
-	if !expectWritten(t, false) {
+	if !t.expectWritten(false) {
 		return
 	}
 	t.written = true
@@ -37,29 +35,21 @@ func (t *renderImpl) WriteResponse(header http.Header, status int, data interfac
 		t.SetContentType(contentJSON + charset)
 	}
 
-	if !expectStatus(t, 0) {
-		return
-	}
-	t.status = status
-	t.w.WriteHeader(status)
+	t.writeStatus(status)
 	if !bodyAllowedForStatus(status) && data == nil {
 		return
 	}
 
-	writer := getWriter(t)
-	defer func() {
-		t.size += writer.size
-	}()
 	switch value := data.(type) {
 	case []byte:
 		if len(value) < 1 {
 			return
 		}
-		if _, err := writer.Write(value); err != nil {
+		if _, err := t.write(value); err != nil {
 			errutil.Trace(err)
 		}
 	default:
-		jsonenc := jsonex.NewEncoder(writer)
+		jsonenc := jsonex.NewEncoder(t.GetResponseWriter())
 		errutil.Trace(jsonenc.Encode(value))
 	}
 }
@@ -68,36 +58,31 @@ func (t renderImpl) IsWritten() bool {
 	return t.written
 }
 
-func expectWritten(r *renderImpl, written bool) bool {
-	if written == r.written {
+func (t renderImpl) expectWritten(written bool) bool {
+	writeStatus := t.IsWritten()
+	if written == writeStatus {
 		return true
 	}
 
-	errutil.Trace(ErrorUnexpectedWrittenStatus2.New(nil, written, r.written))
+	errutil.Trace(ErrorUnexpectedWrittenStatus2.New(nil, written, writeStatus))
 	debug.PrintStack()
 	return false
 }
 
-func expectStatus(r *renderImpl, status int) bool {
-	if status == r.status {
-		return true
+func (t *renderImpl) write(p []byte) (n int, err error) {
+	if !t.written {
+		t.written = true
 	}
 
-	errutil.Trace(ErrorUnexpectedStatusCode2.New(nil, status, r.status))
-	debug.PrintStack()
-	return false
-}
+	switch t.status {
+	case 0:
+		// first Write call
+		t.writeStatus(http.StatusOK)
+	case http.StatusNotModified:
+		return 0, nil
+	}
 
-type writerLogSize struct {
-	writer io.Writer
-	size   int64
-
-	buffer        *bytes.Buffer
-	maxBufferSize int64
-}
-
-func (t *writerLogSize) Write(p []byte) (n int, err error) {
-	n, err = t.writer.Write(p)
+	n, err = t.w.Write(p)
 	t.size += int64(n)
 
 	rest := t.maxBufferSize - int64(t.buffer.Len())
@@ -110,16 +95,4 @@ func (t *writerLogSize) Write(p []byte) (n int, err error) {
 	}
 
 	return
-}
-
-var _ io.Writer = &writerLogSize{}
-
-// getWriter return io.Writer with BufferResponse flag
-func getWriter(r *renderImpl) (writer *writerLogSize) {
-	return &writerLogSize{
-		writer: r.w,
-
-		buffer:        r.buffer,
-		maxBufferSize: r.maxBufferSize,
-	}
 }

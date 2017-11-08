@@ -1,7 +1,6 @@
 package render
 
 import (
-	"io"
 	"net/http"
 	"time"
 )
@@ -68,6 +67,8 @@ type Request interface {
 type Response interface {
 	// GetResponseHeader return http response header
 	GetResponseHeader() http.Header
+	// GetResponseWriter return http response writer interface
+	GetResponseWriter() http.ResponseWriter
 }
 
 // Status interface for get status from Render which already set before
@@ -82,10 +83,4 @@ type Write interface {
 	WriteResponse(header http.Header, status int, data interface{})
 	// IsWritten return true if already write something
 	IsWritten() bool
-}
-
-// Writer interface for get io.Writer API, low level API
-type Writer interface {
-	// GetIOWriter return io.Writer interface
-	GetIOWriter() io.Writer
 }

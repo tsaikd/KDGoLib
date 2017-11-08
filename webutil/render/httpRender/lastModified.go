@@ -12,7 +12,7 @@ const (
 )
 
 func (t *renderImpl) LastModified(ts time.Time) (notModified bool) {
-	if !expectWritten(t, false) {
+	if !t.expectWritten(false) {
 		return false
 	}
 	if t.lastModified.Before(ts) {
