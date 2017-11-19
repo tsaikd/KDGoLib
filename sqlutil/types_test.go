@@ -80,3 +80,17 @@ func TestSQLNullTime(t *testing.T) {
 	require.NoError(err)
 	require.Equal(string(timeData), string(data))
 }
+
+func TestSQLUUID(t *testing.T) {
+	require := require.New(t)
+	require.NotNil(require)
+
+	var value SQLUUID
+	err := value.Scan([]byte(`f9a9786c-cd25-11e7-a02f-f7c1122e8f72`))
+	require.NoError(err)
+	require.EqualValues(`f9a9786c-cd25-11e7-a02f-f7c1122e8f72`, value)
+
+	sqlv, err := value.Value()
+	require.NoError(err)
+	require.Equal("f9a9786c-cd25-11e7-a02f-f7c1122e8f72", sqlv)
+}
