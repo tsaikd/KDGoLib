@@ -16,7 +16,7 @@ func (t *SQLStringSlice) Scan(value interface{}) (err error) {
 }
 
 // Value return data for SQL
-func (t *SQLStringSlice) Value() (value driver.Value, err error) {
+func (t SQLStringSlice) Value() (value driver.Value, err error) {
 	return SQLValueStringSlice(t)
 }
 
@@ -47,7 +47,7 @@ func (t *SQLStringSliceJSON) Scan(value interface{}) (err error) {
 }
 
 // Value return data for SQL
-func (t *SQLStringSliceJSON) Value() (value driver.Value, err error) {
+func (t SQLStringSliceJSON) Value() (value driver.Value, err error) {
 	return SQLValueJSON(t)
 }
 
@@ -60,7 +60,7 @@ func (t *SQLJsonMap) Scan(value interface{}) (err error) {
 }
 
 // Value return data for SQL
-func (t *SQLJsonMap) Value() (value driver.Value, err error) {
+func (t SQLJsonMap) Value() (value driver.Value, err error) {
 	return SQLValueJSON(t)
 }
 
