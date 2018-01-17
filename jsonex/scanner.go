@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package jsonex
+package json
 
 // JSON value parser state machine.
 // Just about at the limit of what is reasonable to write by hand.
@@ -14,6 +14,11 @@ package jsonex
 // before diving into the scanner itself.
 
 import "strconv"
+
+// Valid reports whether data is a valid JSON encoding.
+func Valid(data []byte) bool {
+	return checkValid(data, &scanner{}) == nil
+}
 
 // checkValid verifies that data is valid JSON-encoded data.
 // scan is passed in for use by checkValid to avoid an allocation.

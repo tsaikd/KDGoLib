@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package jsonex
+package json
 
 import (
 	"bytes"
@@ -34,10 +34,6 @@ func NewDecoder(r io.Reader) *Decoder {
 // UseNumber causes the Decoder to unmarshal a number into an interface{} as a
 // Number instead of as a float64.
 func (dec *Decoder) UseNumber() { dec.d.useNumber = true }
-
-// MissingFieldAsError causes the Decoder to unmarshal a object into an struct{}
-// will return error instead of ignore.
-func (dec *Decoder) MissingFieldAsError() { dec.d.missingFieldAsError = true }
 
 // Decode reads the next JSON-encoded value from its
 // input and stores it in the value pointed to by v.

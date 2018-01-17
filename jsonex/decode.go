@@ -5,7 +5,7 @@
 // Represents JSON data structure using native Go types: booleans, floats,
 // strings, arrays, and maps.
 
-package jsonex
+package json
 
 import (
 	"bytes"
@@ -22,7 +22,8 @@ import (
 )
 
 // Unmarshal parses the JSON-encoded data and stores the result
-// in the value pointed to by v.
+// in the value pointed to by v. If v is nil or not a pointer,
+// Unmarshal returns an InvalidUnmarshalError.
 //
 // Unmarshal uses the inverse of the encodings that
 // Marshal uses, allocating maps, slices, and pointers as necessary,
@@ -78,7 +79,9 @@ import (
 // or if a JSON number overflows the target type, Unmarshal
 // skips that field and completes the unmarshaling as best it can.
 // If no more serious errors are encountered, Unmarshal returns
-// an UnmarshalTypeError describing the earliest such error.
+// an UnmarshalTypeError describing the earliest such error. In any
+// case, it's not guaranteed that all the remaining fields following
+// the problematic one will be unmarshaled into the target object.
 //
 // The JSON null value unmarshals into an interface, map, pointer, or slice
 // by setting that Go value to nil. Because null is often used in JSON to mean
@@ -273,9 +276,6 @@ type decodeState struct {
 	}
 	savedError error
 	useNumber  bool
-
-	// extension
-	missingFieldAsError bool
 }
 
 // errPhase is used for errors that should not happen unless
@@ -712,8 +712,6 @@ func (d *decodeState) object(v reflect.Value) {
 				}
 				d.errorContext.Field = f.name
 				d.errorContext.Struct = v.Type().Name()
-			} else if d.missingFieldAsError {
-				d.saveError(&UnmarshalFieldError{string(key), v.Type(), reflect.StructField{Name: string(key)}})
 			}
 		}
 
