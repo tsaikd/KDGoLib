@@ -1,8 +1,11 @@
 package httpRender
 
 import (
+	"net"
 	"net/http"
+	"os"
 	"strings"
+	"syscall"
 
 	"github.com/tsaikd/KDGoLib/errutil"
 )
@@ -30,6 +33,15 @@ func (t *renderImpl) Error(err error) {
 		if trimpath != output.ErrorPath { // only match one trim rule
 			output.ErrorPath = trimpath
 			break
+		}
+	}
+
+	if operr, ok := t.err.(*net.OpError); ok {
+		if syserr, ok := operr.Err.(*os.SyscallError); ok {
+			if syserr.Err == syscall.EPIPE {
+				// do not send error message if the error cause from write a broken pipe
+				return
+			}
 		}
 	}
 
