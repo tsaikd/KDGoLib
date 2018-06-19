@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/runtimecaller"
 )
@@ -35,7 +35,7 @@ func addspace(text string, addspaceflag bool) (string, bool) {
 }
 
 func filterLogrusRuntimeCaller(callinfo runtimecaller.CallInfo) (valid bool, stop bool) {
-	return !strings.Contains(callinfo.PackageName(), "github.com/Sirupsen/logrus"), false
+	return !strings.Contains(callinfo.PackageName(), "github.com/sirupsen/logrus"), false
 }
 
 // Format output logrus entry

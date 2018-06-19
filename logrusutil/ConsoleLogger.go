@@ -3,7 +3,7 @@ package logrusutil
 import (
 	"os"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // NewConsoleLogger create new Logger with ConsoleLogFormatter

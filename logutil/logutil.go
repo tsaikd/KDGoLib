@@ -3,7 +3,7 @@ package logutil
 import (
 	"os"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/codegangsta/inject"
 	"github.com/tsaikd/KDGoLib/logrusutil"
 )

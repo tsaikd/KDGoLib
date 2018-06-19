@@ -1,6 +1,6 @@
 package logrusutil
 
-import "github.com/Sirupsen/logrus"
+import "github.com/sirupsen/logrus"
 
 // StackLogLevel temporary change log level and return recover function
 func StackLogLevel(logger *logrus.Logger, level logrus.Level) (recover func()) {
