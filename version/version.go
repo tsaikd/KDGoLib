@@ -12,6 +12,7 @@ import (
 
 // exported variables
 var (
+	NAME      string
 	VERSION   = "0.0.0"
 	BUILDTIME string
 	GITCOMMIT string
@@ -20,6 +21,7 @@ var (
 
 // Version contains info for Get response
 type Version struct {
+	Name      string      `json:"name,omitempty"`
 	Version   string      `json:"version"`
 	GoVersion string      `json:"goversion"`
 	BuildTime string      `json:"buildtime,omitempty"`
@@ -28,7 +30,11 @@ type Version struct {
 }
 
 func (t Version) String() string {
-	output := t.Version
+	output := t.Name
+	if output != "" {
+		output += " "
+	}
+	output += t.Version
 	if t.BuildTime != "" {
 		output += fmt.Sprintf(" [%s]", t.BuildTime)
 	}
@@ -60,6 +66,7 @@ func Get() (ver Version) {
 		}
 	}
 	return Version{
+		Name:      NAME,
 		Version:   VERSION,
 		GoVersion: runtime.Version(),
 		BuildTime: BUILDTIME,
