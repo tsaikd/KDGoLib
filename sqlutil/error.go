@@ -1,6 +1,7 @@
 package sqlutil
 
 import (
+	"database/sql"
 	"strings"
 
 	"github.com/lib/pq"
@@ -14,15 +15,22 @@ var (
 	ErrorTsquerySyntax                    = errutil.NewFactory("syntax error in tsquery")
 )
 
-// IsErrorNoRowsInResultSet check err is sql error "no rows in result set"
+// IsErrorNoRowsInResultSet check err is sql error "no rows in result set" or "no row affected"
 func IsErrorNoRowsInResultSet(err error) bool {
-	if err == nil {
+	switch err {
+	case nil:
 		return false
+	case sql.ErrNoRows:
+		return true
 	}
 	if ErrorNoRowsInResultSet.Match(err) {
 		return true
 	}
-	return err.Error() == "sql: no rows in result set"
+	switch err.Error() {
+	case "sql: no rows in result set", "no row affected":
+		return true
+	}
+	return false
 }
 
 // IsContainErrorNoRowsInResultSet check err contain sql error "no rows in result set"
