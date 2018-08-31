@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"strings"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/lib/pq"
 	"github.com/tsaikd/KDGoLib/errutil"
 )
@@ -43,15 +44,13 @@ func IsErrorDuplicateViolateUniqueConstraint(err error) bool {
 	if ErrorDuplicateViolateUniqueConstraint.Match(err) {
 		return true
 	}
-	switch err.(type) {
+	switch e := err.(type) {
 	case nil:
 		return false
 	case *pq.Error:
-		e := err.(*pq.Error)
-		if e.Code != "23505" {
-			return false
-		}
-		return strings.Contains(e.Message, "duplicate key value violates unique constraint")
+		return e.Code == "23505"
+	case *mysql.MySQLError:
+		return e.Number == 1062
 	default:
 		return strings.Contains(err.Error(), "pq: duplicate key value violates unique constraint")
 	}
