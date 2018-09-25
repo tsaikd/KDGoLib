@@ -34,7 +34,7 @@ func SQLScanStrictJSON(obj interface{}, value interface{}) (err error) {
 	switch val := value.(type) {
 	case []byte:
 		decoder := jsonex.NewDecoder(bytes.NewBuffer(val))
-		decoder.MissingFieldAsError()
+		decoder.DisallowUnknownFields()
 		return decoder.Decode(obj)
 	case nil:
 		return nil
