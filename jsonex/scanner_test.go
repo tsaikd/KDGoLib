@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package jsonex
+package json
 
 import (
 	"bytes"
@@ -198,43 +198,6 @@ func TestIndentErrors(t *testing.T) {
 			}
 		}
 	}
-}
-
-func TestNextValueBig(t *testing.T) {
-	initBig()
-	var scan scanner
-	item, rest, err := nextValue(jsonBig, &scan)
-	if err != nil {
-		t.Fatalf("nextValue: %s", err)
-	}
-	if len(item) != len(jsonBig) || &item[0] != &jsonBig[0] {
-		t.Errorf("invalid item: %d %d", len(item), len(jsonBig))
-	}
-	if len(rest) != 0 {
-		t.Errorf("invalid rest: %d", len(rest))
-	}
-
-	item, rest, err = nextValue(append(jsonBig, "HELLO WORLD"...), &scan)
-	if err != nil {
-		t.Fatalf("nextValue extra: %s", err)
-	}
-	if len(item) != len(jsonBig) {
-		t.Errorf("invalid item: %d %d", len(item), len(jsonBig))
-	}
-	if string(rest) != "HELLO WORLD" {
-		t.Errorf("invalid rest: %d", len(rest))
-	}
-}
-
-var benchScan scanner
-
-func BenchmarkSkipValue(b *testing.B) {
-	initBig()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		nextValue(jsonBig, &benchScan)
-	}
-	b.SetBytes(int64(len(jsonBig)))
 }
 
 func diff(t *testing.T, a, b []byte) {

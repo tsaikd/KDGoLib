@@ -3,12 +3,12 @@
 // license that can be found in the LICENSE file.
 
 // Package json implements encoding and decoding of JSON as defined in
-// RFC 4627. The mapping between JSON and Go values is described
+// RFC 7159. The mapping between JSON and Go values is described
 // in the documentation for the Marshal and Unmarshal functions.
 //
 // See "JSON and Go" for an introduction to this package:
 // https://golang.org/doc/articles/json_and_go.html
-package jsonex
+package json
 
 import (
 	"bytes"
@@ -17,12 +17,10 @@ import (
 	"fmt"
 	"math"
 	"reflect"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"unicode"
 	"unicode/utf8"
 )
@@ -157,15 +155,23 @@ import (
 // an infinite recursion.
 //
 func Marshal(v interface{}) ([]byte, error) {
-	e := &encodeState{}
+	e := newEncodeState()
+
 	err := e.marshal(v, encOpts{escapeHTML: true})
 	if err != nil {
 		return nil, err
 	}
-	return e.Bytes(), nil
+	buf := append([]byte(nil), e.Bytes()...)
+
+	e.Reset()
+	encodeStatePool.Put(e)
+
+	return buf, nil
 }
 
 // MarshalIndent is like Marshal but applies Indent to format the output.
+// Each JSON element in the output will begin on a new line beginning with prefix
+// followed by one or more copies of indent according to the indentation nesting.
 func MarshalIndent(v interface{}, prefix, indent string) ([]byte, error) {
 	b, err := Marshal(v)
 	if err != nil {
@@ -243,8 +249,8 @@ func (e *UnsupportedValueError) Error() string {
 // attempting to encode a string value with invalid UTF-8 sequences.
 // As of Go 1.2, Marshal instead coerces the string to valid UTF-8 by
 // replacing invalid bytes with the Unicode replacement rune U+FFFD.
-// This error is no longer generated but is kept for backwards compatibility
-// with programs that might mention it.
+//
+// Deprecated: No longer used; kept for compatibility.
 type InvalidUTF8Error struct {
 	S string // the whole string value that caused the error
 }
@@ -281,24 +287,28 @@ func newEncodeState() *encodeState {
 	return new(encodeState)
 }
 
+// jsonError is an error wrapper type for internal use only.
+// Panics with errors are wrapped in jsonError so that the top-level recover
+// can distinguish intentional panics from this package.
+type jsonError struct{ error }
+
 func (e *encodeState) marshal(v interface{}, opts encOpts) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			if _, ok := r.(runtime.Error); ok {
+			if je, ok := r.(jsonError); ok {
+				err = je.error
+			} else {
 				panic(r)
 			}
-			if s, ok := r.(string); ok {
-				panic(s)
-			}
-			err = r.(error)
 		}
 	}()
 	e.reflectValue(reflect.ValueOf(v), opts)
 	return nil
 }
 
+// error aborts the encoding by panicking with err wrapped in jsonError.
 func (e *encodeState) error(err error) {
-	panic(err)
+	panic(jsonError{err})
 }
 
 func isEmptyValue(v reflect.Value) bool {
@@ -314,49 +324,7 @@ func isEmptyValue(v reflect.Value) bool {
 	case reflect.Float32, reflect.Float64:
 		return v.Float() == 0
 	case reflect.Interface, reflect.Ptr:
-		if v.IsNil() {
-			return true
-		}
-		return isEmptyValue(v.Elem())
-	case reflect.Struct:
-		if v.CanInterface() {
-			switch fn := v.Interface().(type) {
-			case supportZero:
-				return fn.IsZero()
-			case Marshaler:
-				if data, err := fn.MarshalJSON(); err == nil {
-					switch string(data) {
-					case "null", "{}", "[]":
-						return true
-					default:
-						return false
-					}
-				}
-			}
-		}
-		t := v.Type()
-		for i, n := 0, t.NumField(); i < n; i++ {
-			elemVal := v.Field(i)
-			elemField := t.Field(i)
-			if !elemField.Anonymous && !elemVal.CanInterface() {
-				continue
-			}
-
-			tag := elemField.Tag.Get("json")
-			if tag == ignoreTag {
-				continue
-			}
-
-			if isDefaultValue(elemVal, elemField.Tag.Get("default")) {
-				continue
-			}
-			if isEmptyValue(elemVal) {
-				continue
-			}
-
-			return false
-		}
-		return true
+		return v.IsNil()
 	}
 	return false
 }
@@ -668,9 +636,6 @@ func (se *structEncoder) encode(e *encodeState, v reflect.Value, opts encOpts) {
 		if !fv.IsValid() || f.omitEmpty && isEmptyValue(fv) {
 			continue
 		}
-		if f.omitDefault && isDefaultValue(fv, f.defaultTag) {
-			continue
-		}
 		if first {
 			first = false
 		} else {
@@ -916,8 +881,7 @@ func (w *reflectWithString) resolve() error {
 }
 
 // NOTE: keep in sync with stringBytes below.
-func (e *encodeState) string(s string, escapeHTML bool) int {
-	len0 := e.Len()
+func (e *encodeState) string(s string, escapeHTML bool) {
 	e.WriteByte('"')
 	start := 0
 	for i := 0; i < len(s); {
@@ -989,12 +953,10 @@ func (e *encodeState) string(s string, escapeHTML bool) int {
 		e.WriteString(s[start:])
 	}
 	e.WriteByte('"')
-	return e.Len() - len0
 }
 
 // NOTE: keep in sync with string above.
-func (e *encodeState) stringBytes(s []byte, escapeHTML bool) int {
-	len0 := e.Len()
+func (e *encodeState) stringBytes(s []byte, escapeHTML bool) {
 	e.WriteByte('"')
 	start := 0
 	for i := 0; i < len(s); {
@@ -1066,7 +1028,6 @@ func (e *encodeState) stringBytes(s []byte, escapeHTML bool) int {
 		e.Write(s[start:])
 	}
 	e.WriteByte('"')
-	return e.Len() - len0
 }
 
 // A field represents a single field found in a struct.
@@ -1080,10 +1041,6 @@ type field struct {
 	typ       reflect.Type
 	omitEmpty bool
 	quoted    bool
-
-	// extension
-	omitDefault bool
-	defaultTag  string
 }
 
 func fillField(f field) field {
@@ -1142,26 +1099,24 @@ func typeFields(t reflect.Type) []field {
 			// Scan f.typ for fields to include.
 			for i := 0; i < f.typ.NumField(); i++ {
 				sf := f.typ.Field(i)
+				isUnexported := sf.PkgPath != ""
 				if sf.Anonymous {
 					t := sf.Type
 					if t.Kind() == reflect.Ptr {
 						t = t.Elem()
 					}
-					// If embedded, StructField.PkgPath is not a reliable
-					// indicator of whether the field is exported.
-					// See https://golang.org/issue/21122
-					if !isExported(t.Name()) && t.Kind() != reflect.Struct {
+					if isUnexported && t.Kind() != reflect.Struct {
 						// Ignore embedded fields of unexported non-struct types.
-						// Do not ignore embedded fields of unexported struct types
-						// since they may have exported fields.
 						continue
 					}
-				} else if sf.PkgPath != "" {
+					// Do not ignore embedded fields of unexported struct types
+					// since they may have exported fields.
+				} else if isUnexported {
 					// Ignore unexported non-embedded fields.
 					continue
 				}
 				tag := sf.Tag.Get("json")
-				if tag == ignoreTag {
+				if tag == "-" {
 					continue
 				}
 				name, opts := parseTag(tag)
@@ -1184,7 +1139,7 @@ func typeFields(t reflect.Type) []field {
 					switch ft.Kind() {
 					case reflect.Bool,
 						reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-						reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+						reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
 						reflect.Float32, reflect.Float64,
 						reflect.String:
 						quoted = true
@@ -1198,14 +1153,12 @@ func typeFields(t reflect.Type) []field {
 						name = sf.Name
 					}
 					fields = append(fields, fillField(field{
-						name:        name,
-						tag:         tagged,
-						index:       index,
-						typ:         ft,
-						omitEmpty:   opts.Contains("omitempty"),
-						omitDefault: opts.Contains("omitdefault"),
-						defaultTag:  sf.Tag.Get("default"),
-						quoted:      quoted,
+						name:      name,
+						tag:       tagged,
+						index:     index,
+						typ:       ft,
+						omitEmpty: opts.Contains("omitempty"),
+						quoted:    quoted,
 					}))
 					if count[f.typ] > 1 {
 						// If there were multiple instances, add a second,
@@ -1277,12 +1230,6 @@ func typeFields(t reflect.Type) []field {
 	return fields
 }
 
-// isExported reports whether the identifier is exported.
-func isExported(id string) bool {
-	r, _ := utf8.DecodeRuneInString(id)
-	return unicode.IsUpper(r)
-}
-
 // dominantField looks through the fields, all of which are known to
 // have the same name, to find the single field that dominates the
 // others using Go's embedding rules, modified by the presence of
@@ -1290,65 +1237,22 @@ func isExported(id string) bool {
 // will be false: This condition is an error in Go and we skip all
 // the fields.
 func dominantField(fields []field) (field, bool) {
-	// The fields are sorted in increasing index-length order. The winner
-	// must therefore be one with the shortest index length. Drop all
-	// longer entries, which is easy: just truncate the slice.
-	length := len(fields[0].index)
-	tagged := -1 // Index of first tagged field.
-	for i, f := range fields {
-		if len(f.index) > length {
-			fields = fields[:i]
-			break
-		}
-		if f.tag {
-			if tagged >= 0 {
-				// Multiple tagged fields at the same level: conflict.
-				// Return no field.
-				return field{}, false
-			}
-			tagged = i
-		}
-	}
-	if tagged >= 0 {
-		return fields[tagged], true
-	}
-	// All remaining fields have the same length. If there's more than one,
-	// we have a conflict (two fields named "X" at the same level) and we
-	// return no field.
-	if len(fields) > 1 {
+	// The fields are sorted in increasing index-length order, then by presence of tag.
+	// That means that the first field is the dominant one. We need only check
+	// for error cases: two fields at top level, either both tagged or neither tagged.
+	if len(fields) > 1 && len(fields[0].index) == len(fields[1].index) && fields[0].tag == fields[1].tag {
 		return field{}, false
 	}
 	return fields[0], true
 }
 
-var fieldCache struct {
-	value atomic.Value // map[reflect.Type][]field
-	mu    sync.Mutex   // used only by writers
-}
+var fieldCache sync.Map // map[reflect.Type][]field
 
 // cachedTypeFields is like typeFields but uses a cache to avoid repeated work.
 func cachedTypeFields(t reflect.Type) []field {
-	m, _ := fieldCache.value.Load().(map[reflect.Type][]field)
-	f := m[t]
-	if f != nil {
-		return f
+	if f, ok := fieldCache.Load(t); ok {
+		return f.([]field)
 	}
-
-	// Compute fields without lock.
-	// Might duplicate effort but won't hold other computations back.
-	f = typeFields(t)
-	if f == nil {
-		f = []field{}
-	}
-
-	fieldCache.mu.Lock()
-	m, _ = fieldCache.value.Load().(map[reflect.Type][]field)
-	newM := make(map[reflect.Type][]field, len(m)+1)
-	for k, v := range m {
-		newM[k] = v
-	}
-	newM[t] = f
-	fieldCache.value.Store(newM)
-	fieldCache.mu.Unlock()
-	return f
+	f, _ := fieldCache.LoadOrStore(t, typeFields(t))
+	return f.([]field)
 }

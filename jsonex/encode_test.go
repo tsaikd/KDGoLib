@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package jsonex
+package json
 
 import (
 	"bytes"
@@ -51,7 +51,8 @@ var optionalsExpected = `{
  "fr": 0,
  "br": false,
  "ur": 0,
- "str": {}
+ "str": {},
+ "sto": {}
 }`
 
 func TestOmitEmpty(t *testing.T) {
@@ -70,14 +71,16 @@ func TestOmitEmpty(t *testing.T) {
 }
 
 type StringTag struct {
-	BoolStr bool   `json:",string"`
-	IntStr  int64  `json:",string"`
-	StrStr  string `json:",string"`
+	BoolStr    bool    `json:",string"`
+	IntStr     int64   `json:",string"`
+	UintptrStr uintptr `json:",string"`
+	StrStr     string  `json:",string"`
 }
 
 var stringTagExpected = `{
  "BoolStr": "true",
  "IntStr": "42",
+ "UintptrStr": "44",
  "StrStr": "\"xzbit\""
 }`
 
@@ -85,6 +88,7 @@ func TestStringTag(t *testing.T) {
 	var s StringTag
 	s.BoolStr = true
 	s.IntStr = 42
+	s.UintptrStr = 44
 	s.StrStr = "xzbit"
 	got, err := MarshalIndent(&s, "", " ")
 	if err != nil {
@@ -914,9 +918,9 @@ func TestMarshalRawMessageValue(t *testing.T) {
 		{map[string]interface{}{"M": &rawNil}, `{"M":null}`, true},
 		{&map[string]interface{}{"M": &rawNil}, `{"M":null}`, true},
 		{T1{rawNil}, "{}", true},
-		{T2{&rawNil}, `{}`, true},
+		{T2{&rawNil}, `{"M":null}`, true},
 		{&T1{rawNil}, "{}", true},
-		{&T2{&rawNil}, `{}`, true},
+		{&T2{&rawNil}, `{"M":null}`, true},
 
 		// Test with empty, but non-nil, RawMessage.
 		{rawEmpty, "", false},
@@ -934,15 +938,15 @@ func TestMarshalRawMessageValue(t *testing.T) {
 		{map[string]interface{}{"nil": &rawEmpty}, "", false},
 		{&map[string]interface{}{"nil": &rawEmpty}, "", false},
 		{T1{rawEmpty}, "{}", true},
-		{T2{&rawEmpty}, "{}", true},
+		{T2{&rawEmpty}, "", false},
 		{&T1{rawEmpty}, "{}", true},
-		{&T2{&rawEmpty}, "{}", true},
+		{&T2{&rawEmpty}, "", false},
 
 		// Test with RawMessage with some text.
 		//
 		// The tests below marked with Issue6458 used to generate "ImZvbyI=" instead "foo".
 		// This behavior was intentionally changed in Go 1.8.
-		// See https://github.com/golang/go/issues/14493#issuecomment-255857318
+		// See https://golang.org/issues/14493#issuecomment-255857318
 		{rawText, `"foo"`, true}, // Issue6458
 		{&rawText, `"foo"`, true},
 		{[]interface{}{rawText}, `["foo"]`, true},  // Issue6458
@@ -976,4 +980,18 @@ func TestMarshalRawMessageValue(t *testing.T) {
 			t.Errorf("test %d, Marshal(%#v) = %q, want %q", i, tt.in, got, tt.want)
 		}
 	}
+}
+
+type marshalPanic struct{}
+
+func (marshalPanic) MarshalJSON() ([]byte, error) { panic(0xdead) }
+
+func TestMarshalPanic(t *testing.T) {
+	defer func() {
+		if got := recover(); !reflect.DeepEqual(got, 0xdead) {
+			t.Errorf("panic() = (%T)(%v), want 0xdead", got, got)
+		}
+	}()
+	Marshal(&marshalPanic{})
+	t.Error("Marshal should have panicked")
 }
