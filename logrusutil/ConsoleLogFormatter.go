@@ -22,9 +22,10 @@ const (
 
 // ConsoleLogFormatter suitable formatter for console
 type ConsoleLogFormatter struct {
-	TimestampFormat string
-	Flag            int
-	CallerOffset    int
+	TimestampFormat      string
+	Flag                 int
+	CallerOffset         int
+	RuntimeCallerFilters []runtimecaller.Filter
 }
 
 func addspace(text string, addspaceflag bool) (string, bool) {
@@ -62,7 +63,8 @@ func (t *ConsoleLogFormatter) Format(entry *logrus.Entry) (data []byte, err erro
 
 	if t.Flag&(Lshortfile|Llongfile) != 0 {
 		var filelinetext string
-		if callinfo, ok := errutil.RuntimeCaller(1+t.CallerOffset, filterLogrusRuntimeCaller); ok {
+		filters := append([]runtimecaller.Filter{filterLogrusRuntimeCaller}, t.RuntimeCallerFilters...)
+		if callinfo, ok := errutil.RuntimeCaller(1+t.CallerOffset, filters...); ok {
 			if t.Flag&Lshortfile != 0 {
 				filelinetext = fmt.Sprintf("%s:%d", callinfo.FileName(), callinfo.Line())
 			} else {
