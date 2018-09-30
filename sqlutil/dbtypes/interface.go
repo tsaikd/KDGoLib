@@ -49,6 +49,11 @@ type Queryx interface {
 	QueryxContext(ctx context.Context, query string, args ...interface{}) (*sqlx.Rows, error)
 }
 
+// Rebind support rebind args
+type Rebind interface {
+	Rebind(query string) string
+}
+
 // Transaction for db connection
 type Transaction interface {
 	Commit() error
@@ -60,8 +65,10 @@ type Transaction interface {
 	Named
 }
 
+// Transactionx more interface for Transaction
 type Transactionx interface {
 	Queryx
+	Rebind
 
 	Transaction
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/tsaikd/KDGoLib/errutil"
 	"github.com/tsaikd/KDGoLib/sqlutil/dbtypes"
 )
@@ -151,6 +152,31 @@ func NamedSelectContext(
 		return ErrorPrepareNamed.New(err)
 	}
 	if err = stmt.SelectContext(ctx, dest, arg); err != nil {
+		return wrapError(err)
+	}
+	return nil
+}
+
+// NamedSelectInContext prepare named/in SQL statement and call Select function with context
+func NamedSelectInContext(
+	ctx context.Context,
+	tx dbtypes.Transactionx,
+	dest interface{},
+	query string,
+	arg interface{},
+) (err error) {
+	query, args, err := sqlx.Named(query, arg)
+	if err != nil {
+		return ErrorPrepareNamed.New(err)
+	}
+
+	query, args, err = sqlx.In(query, args...)
+	if err != nil {
+		return ErrorPrepareNamed.New(err)
+	}
+
+	query = tx.Rebind(query)
+	if err = tx.SelectContext(ctx, dest, query, args...); err != nil {
 		return wrapError(err)
 	}
 	return nil
