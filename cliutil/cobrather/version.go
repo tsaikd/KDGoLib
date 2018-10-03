@@ -20,12 +20,12 @@ var (
 // command line flags
 var (
 	flagNumber = &BoolFlag{
-		Name:      "number",
+		Name:      "version.number",
 		ShortHand: "n",
 		Usage:     "only show the version number",
 	}
 	flagContains = &StringFlag{
-		Name:      "contains",
+		Name:      "version.contains",
 		ShortHand: "c",
 		Usage:     "version is inside the range",
 	}
