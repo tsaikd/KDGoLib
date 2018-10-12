@@ -6,7 +6,11 @@ import "github.com/tsaikd/KDGoLib/runtimecaller"
 var DefaultRuntimeCallerFilter = []runtimecaller.Filter{}
 
 func init() {
-	DefaultRuntimeCallerFilter = append(runtimecaller.FilterCommons, RuntimeCallerFilterStopErrutilPackage)
+	DefaultRuntimeCallerFilter = append(
+		runtimecaller.FilterCommons,
+		RuntimeCallerFilterStopErrutilPackage,
+		RuntimeCallerFilterStopSQLUtilPackage,
+	)
 }
 
 // AddRuntimeCallerFilter add filters to DefaultRuntimeCallerFilter for RuntimeCaller()
@@ -17,6 +21,14 @@ func AddRuntimeCallerFilter(filters ...runtimecaller.Filter) {
 // RuntimeCallerFilterStopErrutilPackage filter CallInfo to stop after reach KDGoLib/errutil package
 func RuntimeCallerFilterStopErrutilPackage(callinfo runtimecaller.CallInfo) (valid bool, stop bool) {
 	if callinfo.PackageName() == "github.com/tsaikd/KDGoLib/errutil" {
+		return false, true
+	}
+	return true, false
+}
+
+// RuntimeCallerFilterStopSQLUtilPackage filter CallInfo to stop after reach KDGoLib/sqlutil package
+func RuntimeCallerFilterStopSQLUtilPackage(callinfo runtimecaller.CallInfo) (valid bool, stop bool) {
+	if callinfo.PackageName() == "github.com/tsaikd/KDGoLib/sqlutil" {
 		return false, true
 	}
 	return true, false
