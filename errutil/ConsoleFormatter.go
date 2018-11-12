@@ -2,7 +2,6 @@ package errutil
 
 import (
 	"bytes"
-	"strconv"
 	"time"
 )
 
@@ -25,6 +24,8 @@ type ConsoleFormatter struct {
 	ShortFile bool
 	// show error position with line number, work with LongFile or ShortFile
 	Line bool
+	// replace package name for securify
+	ReplacePackages map[string]string
 }
 
 // Format error object
@@ -47,26 +48,9 @@ func (t *ConsoleFormatter) FormatSkip(errin error, skip int) (errtext string, er
 		}
 	}
 
-	if t.LongFile {
-		if _, errio := buffer.WriteString(errobj.PackageName() + "/" + errobj.FileName()); errio != nil {
+	if t.LongFile || t.ShortFile {
+		if _, errio := WriteCallInfo(buffer, errobj, t.LongFile, t.Line, t.ReplacePackages); errio != nil {
 			return buffer.String(), errio
-		}
-		if t.Line {
-			if _, errio := buffer.WriteString(":" + strconv.Itoa(errobj.Line())); errio != nil {
-				return buffer.String(), errio
-			}
-		}
-		if _, errio := buffer.WriteString(" "); errio != nil {
-			return buffer.String(), errio
-		}
-	} else if t.ShortFile {
-		if _, errio := buffer.WriteString(errobj.FileName()); errio != nil {
-			return buffer.String(), errio
-		}
-		if t.Line {
-			if _, errio := buffer.WriteString(":" + strconv.Itoa(errobj.Line())); errio != nil {
-				return buffer.String(), errio
-			}
 		}
 		if _, errio := buffer.WriteString(" "); errio != nil {
 			return buffer.String(), errio

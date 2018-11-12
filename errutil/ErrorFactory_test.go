@@ -4,10 +4,13 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_ErrorFactory(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
@@ -28,6 +31,8 @@ func Test_ErrorFactory(t *testing.T) {
 }
 
 func Test_ErrorFactory_with_param(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
@@ -41,6 +46,8 @@ func Test_ErrorFactory_with_param(t *testing.T) {
 }
 
 func Test_ErrorFactory_chain(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
@@ -57,6 +64,8 @@ func Test_ErrorFactory_chain(t *testing.T) {
 }
 
 func Test_ErrorFactory_chain_with_origin_error(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
@@ -69,12 +78,14 @@ func Test_ErrorFactory_chain_with_origin_error(t *testing.T) {
 	require.NotNil(err.Parent())
 	require.Equal("origin error", err.Parent().Error())
 	require.Equal("ErrorFactory_test.go", err.Parent().FileName())
-	require.Equal(65, err.Parent().Line())
+	require.Equal(74, err.Parent().Line())
 	require.Nil(err.Parent().Parent())
 	require.Nil(err.Parent().Factory())
 }
 
 func Test_ErrorFactory_sorted(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 

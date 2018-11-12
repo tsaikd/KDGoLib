@@ -4,10 +4,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_ConsoleErrorFormatter(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
@@ -75,7 +78,7 @@ func Test_ConsoleErrorFormatter(t *testing.T) {
 				LongFile:  true,
 				Line:      true,
 			},
-			"github.com/tsaikd/KDGoLib/errutil/ConsoleFormatter_test.go:16 lasterror; childerror1; childerror2",
+			"github.com/tsaikd/KDGoLib/errutil/ConsoleFormatter_test.go:19 lasterror; childerror1; childerror2",
 			false,
 			"Seperator|LongFile|Line",
 		},
@@ -85,7 +88,7 @@ func Test_ConsoleErrorFormatter(t *testing.T) {
 				ShortFile: true,
 				Line:      true,
 			},
-			"ConsoleFormatter_test.go:16 lasterror; childerror1; childerror2",
+			"ConsoleFormatter_test.go:19 lasterror; childerror1; childerror2",
 			true,
 			"Seperator|ShortFile|Line",
 		},

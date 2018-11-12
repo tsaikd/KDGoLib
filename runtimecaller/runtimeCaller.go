@@ -29,11 +29,10 @@ func GetByFilters(skip int, filters ...Filter) (callinfo CallInfo, ok bool) {
 
 // ListByFilters return all CallInfo stack for all filters are valid
 func ListByFilters(skip int, filters ...Filter) (callinfos []CallInfo) {
-	skip++
-
 	for {
 		var callinfo CallInfo
 		var ok bool
+		skip++
 
 		if callinfo, ok = retrieveCallInfo(skip); !ok {
 			return
@@ -46,8 +45,6 @@ func ListByFilters(skip int, filters ...Filter) (callinfos []CallInfo) {
 		if stop {
 			return
 		}
-
-		skip++
 	}
 }
 

@@ -4,17 +4,20 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_ErrorObject_New(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
 	err := New("new error")
 	require.Error(err)
 	require.Equal("ErrorObject_test.go", err.FileName())
-	require.Equal(14, err.Line())
+	require.Equal(17, err.Line())
 	require.Equal("new error", err.Error())
 	require.Nil(err.Factory())
 	require.Nil(err.Parent())
@@ -22,13 +25,15 @@ func Test_ErrorObject_New(t *testing.T) {
 }
 
 func Test_ErrorObject_NewErrors(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
 	err := NewErrors(errors.New("new errors"))
 	require.Error(err)
 	require.Equal("ErrorObject_test.go", err.FileName())
-	require.Equal(28, err.Line())
+	require.Equal(33, err.Line())
 	require.Equal("new errors", err.Error())
 	require.Nil(err.Factory())
 	require.Nil(err.Parent())
@@ -36,6 +41,8 @@ func Test_ErrorObject_NewErrors(t *testing.T) {
 }
 
 func Test_ErrorObject_chain_basic(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
@@ -64,6 +71,8 @@ func Test_ErrorObject_chain_basic(t *testing.T) {
 }
 
 func Test_ErrorObject_chain_duplicate1(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
@@ -80,6 +89,8 @@ func Test_ErrorObject_chain_duplicate1(t *testing.T) {
 }
 
 func Test_ErrorObject_chain_duplicate2(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
@@ -98,6 +109,8 @@ func Test_ErrorObject_chain_duplicate2(t *testing.T) {
 }
 
 func Test_ErrorObject_chain_duplicate3(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 

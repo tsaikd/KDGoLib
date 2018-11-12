@@ -9,18 +9,37 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type invalidFormatter struct {
+func TestLogger_Print(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
+	require := require.New(t)
+	require.NotNil(require)
+
+	logger := defaultLogger
+	defer func() {
+		defaultLogger = logger
+	}()
+
+	buffer := &bytes.Buffer{}
+	SetDefaultLogger(loggerImpl{LoggerOptions{
+		DefaultOutput:  buffer,
+		TraceFormatter: NewJSONFormatter(),
+	}})
+
+	errchild1 := New("test error 1")
+	errchild2 := New("test error 2")
+	errtest := New("test error", errchild1, errchild2)
+
+	Logger().Print(errtest.Error())
+
+	errtext := buffer.String()
+	require.Contains(errtext, `test error 1`)
+	require.Contains(errtext, `test error 2`)
+	require.Contains(errtext, `logger_test.go:33 `)
+	require.True(strings.HasSuffix(errtext, "\n"))
 }
 
-func (t *invalidFormatter) Format(errin error) (errtext string, err error) {
-	return "", New("invalid formatter")
-}
-
-func (t *invalidFormatter) FormatSkip(errin error, skip int) (errtext string, err error) {
-	return "", New("invalid formatter")
-}
-
-func Test_Trace(t *testing.T) {
+func TestLogger_Error(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
 	require := require.New(t)
@@ -41,16 +60,16 @@ func Test_Trace(t *testing.T) {
 	errchild2 := New("test error 2")
 	errtest := New("test error", errchild1, errchild2)
 
-	Trace(errtest)
+	Logger().Error(errtest.Error())
 
 	errtext := buffer.String()
-	require.Contains(errtext, `"test error 1"`)
-	require.Contains(errtext, `"test error 2"`)
-	require.Contains(errtext, `trace_test.go:42`)
+	require.Contains(errtext, `test error 1`)
+	require.Contains(errtext, `test error 2`)
+	require.Contains(errtext, `logger_test.go:63 `)
 	require.True(strings.HasSuffix(errtext, "\n"))
 }
 
-func Test_TraceWrap(t *testing.T) {
+func TestLogger_Trace(t *testing.T) {
 	assert := assert.New(t)
 	assert.NotNil(assert)
 	require := require.New(t)
@@ -71,62 +90,11 @@ func Test_TraceWrap(t *testing.T) {
 	errchild2 := New("test error 2")
 	errtest := New("test error", errchild1, errchild2)
 
-	TraceWrap(errtest, New("test error wrapper"))
+	Logger().Trace(errtest)
 
 	errtext := buffer.String()
-	require.Contains(errtext, `"test error wrapper"`)
-	require.Contains(errtext, `"test error"`)
 	require.Contains(errtext, `"test error 1"`)
 	require.Contains(errtext, `"test error 2"`)
+	require.Contains(errtext, `logger_test.go:91`)
 	require.True(strings.HasSuffix(errtext, "\n"))
-}
-
-func Test_TraceWrapNil(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
-	require := require.New(t)
-	require.NotNil(require)
-
-	logger := defaultLogger
-	defer func() {
-		defaultLogger = logger
-	}()
-
-	buffer := &bytes.Buffer{}
-	SetDefaultLogger(loggerImpl{LoggerOptions{
-		ErrorOutput:    buffer,
-		TraceFormatter: NewJSONFormatter(),
-	}})
-
-	TraceWrap(nil, New("test error wrapper"))
-
-	errtext := buffer.String()
-	require.Zero(errtext)
-}
-
-func Test_TracePanic(t *testing.T) {
-	assert := assert.New(t)
-	assert.NotNil(assert)
-	require := require.New(t)
-	require.NotNil(require)
-
-	logger := defaultLogger
-	defer func() {
-		defaultLogger = logger
-	}()
-
-	buffer := &bytes.Buffer{}
-	SetDefaultLogger(loggerImpl{LoggerOptions{
-		ErrorOutput:    buffer,
-		TraceFormatter: &invalidFormatter{},
-	}})
-
-	errtest := NewErrors(
-		New("test error 1"),
-		New("test error 2"),
-	)
-
-	require.Panics(func() {
-		Trace(errtest)
-	})
 }

@@ -1,6 +1,13 @@
 package errutil
 
-import "github.com/tsaikd/KDGoLib/runtimecaller"
+import (
+	"bytes"
+	"io"
+	"strconv"
+	"strings"
+
+	"github.com/tsaikd/KDGoLib/runtimecaller"
+)
 
 // DefaultRuntimeCallerFilter use for filter error stack info
 var DefaultRuntimeCallerFilter = []runtimecaller.Filter{}
@@ -38,4 +45,42 @@ func RuntimeCallerFilterStopSQLUtilPackage(callinfo runtimecaller.CallInfo) (val
 func RuntimeCaller(skip int, extraFilters ...runtimecaller.Filter) (callinfo runtimecaller.CallInfo, ok bool) {
 	filters := append(DefaultRuntimeCallerFilter, extraFilters...)
 	return runtimecaller.GetByFilters(skip+1, filters...)
+}
+
+// WriteCallInfo write readable callinfo with options
+func WriteCallInfo(
+	output io.Writer,
+	callinfo runtimecaller.CallInfo,
+	longFile bool,
+	line bool,
+	replacePackages map[string]string,
+) (n int, err error) {
+	buffer := &bytes.Buffer{}
+	if longFile {
+		pkgname := replacePackage(replacePackages, callinfo.PackageName())
+		if _, err = buffer.WriteString(pkgname + "/" + callinfo.FileName()); err != nil {
+			return
+		}
+	} else {
+		if _, err = buffer.WriteString(callinfo.FileName()); err != nil {
+			return
+		}
+	}
+	if line {
+		if _, err = buffer.WriteString(":" + strconv.Itoa(callinfo.Line())); err != nil {
+			return
+		}
+	}
+	return output.Write([]byte(buffer.String()))
+}
+
+func replacePackage(replacePackages map[string]string, pkgname string) (replaced string) {
+	replaced = pkgname
+	if replacePackages == nil {
+		return
+	}
+	for src, tar := range replacePackages {
+		replaced = strings.Replace(replaced, src, tar, -1)
+	}
+	return
 }

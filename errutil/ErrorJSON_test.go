@@ -4,12 +4,15 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var testFactory = NewNamedFactory("testFactory", "test factory outside")
 
 func Test_JSONStruct(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
@@ -22,10 +25,12 @@ func Test_JSONStruct(t *testing.T) {
 	require.NoError(err)
 	require.Contains(string(data), `"test error 1"`)
 	require.Contains(string(data), `"test error 2"`)
-	require.Contains(string(data), `errutil/ErrorJSON_test.go:17`)
+	require.Contains(string(data), `errutil/ErrorJSON_test.go:20`)
 }
 
 func Test_JSONStruct_outside(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 
@@ -41,6 +46,8 @@ func Test_JSONStruct_outside(t *testing.T) {
 }
 
 func Test_JSONStruct_inherit(t *testing.T) {
+	assert := assert.New(t)
+	assert.NotNil(assert)
 	require := require.New(t)
 	require.NotNil(require)
 

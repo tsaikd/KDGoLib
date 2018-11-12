@@ -1,6 +1,10 @@
 package errutil
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/tsaikd/KDGoLib/runtimecaller"
+)
 
 // errors
 var (
@@ -44,24 +48,18 @@ func NewErrorsSkip(skip int, errs ...error) ErrorObject {
 
 // ErrorObject is a rich error interface
 type ErrorObject interface {
-	PackageName() string
-	FuncName() string
-	FileName() string
-	Line() int
 	Error() string
 	Factory() ErrorFactory
 	Parent() ErrorObject
 	SetParent(parent ErrorObject) ErrorObject
+	runtimecaller.CallInfo
 }
 
 type errorObject struct {
-	packageName string
-	fileName    string
-	funcName    string
-	line        int
-	errtext     string
-	factory     ErrorFactory
-	parent      ErrorObject
+	errtext string
+	factory ErrorFactory
+	parent  ErrorObject
+	runtimecaller.CallInfo
 }
 
 func castErrorObject(factory ErrorFactory, skip int, err error) ErrorObject {
@@ -79,12 +77,9 @@ func castErrorObject(factory ErrorFactory, skip int, err error) ErrorObject {
 	default:
 		callinfo, _ := RuntimeCaller(skip + 1)
 		return &errorObject{
-			packageName: callinfo.PackageName(),
-			fileName:    callinfo.FileName(),
-			funcName:    callinfo.FuncName(),
-			line:        callinfo.Line(),
-			errtext:     err.Error(),
-			factory:     factory,
+			errtext:  err.Error(),
+			factory:  factory,
+			CallInfo: callinfo,
 		}
 	}
 }
@@ -97,36 +92,8 @@ func getErrorText(errin error) string {
 	return errin.Error()
 }
 
-func (t *errorObject) PackageName() string {
-	if t == nil {
-		return ""
-	}
-	return t.packageName
-}
-
-func (t *errorObject) FileName() string {
-	if t == nil {
-		return ""
-	}
-	return t.fileName
-}
-
-func (t *errorObject) FuncName() string {
-	if t == nil {
-		return ""
-	}
-	return t.funcName
-}
-
-func (t *errorObject) Line() int {
-	if t == nil {
-		return 0
-	}
-	return t.line
-}
-
 func (t errorObject) Error() string {
-	errtext, _ := defaultFormatter.Format(&t)
+	errtext, _ := errorObjectFormatter.Format(&t)
 	return errtext
 }
 
@@ -160,3 +127,7 @@ func (t *errorObject) MarshalJSON() ([]byte, error) {
 }
 
 var _ ErrorObject = (*errorObject)(nil)
+
+var errorObjectFormatter = ErrorFormatter(&ConsoleFormatter{
+	Seperator: "; ",
+})
