@@ -10,6 +10,13 @@ func TestRuntimeCaller(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	// clean FilterCommons for test in this package
+	commons := FilterCommons
+	FilterCommons = []Filter{}
+	defer func() {
+		FilterCommons = commons
+	}()
+
 	callinfo, ok := GetByFilters(0)
 	require.True(ok)
 	require.NotZero(callinfo.PC())

@@ -8,9 +8,10 @@ import (
 
 // GetByFilters return CallInfo until all filters are valid
 func GetByFilters(skip int, filters ...Filter) (callinfo CallInfo, ok bool) {
-	skip++
-
+	filters = append(FilterCommons, filters...)
 	for {
+		skip++
+
 		if callinfo, ok = retrieveCallInfo(skip); !ok {
 			return
 		}
@@ -22,13 +23,12 @@ func GetByFilters(skip int, filters ...Filter) (callinfo CallInfo, ok bool) {
 		if stop {
 			return callinfo, false
 		}
-
-		skip++
 	}
 }
 
 // ListByFilters return all CallInfo stack for all filters are valid
 func ListByFilters(skip int, filters ...Filter) (callinfos []CallInfo) {
+	filters = append(FilterCommons, filters...)
 	for {
 		var callinfo CallInfo
 		var ok bool
