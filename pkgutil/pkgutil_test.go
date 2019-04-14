@@ -26,7 +26,7 @@ func TestFindAllSubPackages(t *testing.T) {
 
 	pkglist, err := FindAllSubPackages("github.com/tsaikd/KDGoLib/pkgutil", "")
 	require.NoError(err)
-	require.EqualValues(1, pkglist.Len())
+	require.EqualValues(2, pkglist.Len())
 
 	pkglist, err = FindAllSubPackages("github.com/tsaikd/KDGoLib", "../")
 	require.NoError(err)
@@ -63,4 +63,9 @@ func TestParsePackagePaths(t *testing.T) {
 	pkglist, err = ParsePackagePaths("..", "./cliutil/...")
 	require.NoError(err)
 	require.True(pkglist.Len() > 1)
+
+	pkglist, err = ParsePackagePaths("test")
+	require.NoError(err)
+	require.EqualValues(1, pkglist.Len())
+	require.True(strings.HasSuffix(pkglist.Sorted()[0].ImportPath, "github.com/tsaikd/KDGoLib/pkgutil/test"))
 }

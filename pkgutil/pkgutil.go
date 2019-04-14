@@ -42,7 +42,18 @@ func FindAllSubPackages(importPath string, srcDir string) (pkglist *PackageList,
 	if importPath == "" {
 		var pkg *build.Package
 		if pkg, err = GuessPackageFromDir(srcDir); err != nil {
-			return
+			if !ErrorImpossibleImportDir1.Match(err) {
+				return
+			}
+			if IsGoModDir(srcDir) {
+				var mods []Module
+				mods, err = ParseGoMod(srcDir)
+				if err != nil {
+					return
+				}
+				err = collectModule(pkglist, mods)
+			}
+			return nil, ErrorImpossibleImportDir1.New(nil, srcDir)
 		}
 		importPath = pkg.ImportPath
 	}
@@ -126,4 +137,15 @@ func collectPackageFromSubDir(result *PackageList, importPath string, srcDir str
 	}
 
 	return nil
+}
+
+func collectModule(result *PackageList, modules []Module) (err error) {
+	for _, mod := range modules {
+		result.AddPackage(&build.Package{
+			Dir:        mod.Dir,
+			Name:       mod.GoMod,
+			ImportPath: mod.Path,
+		})
+	}
+	return
 }
