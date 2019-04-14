@@ -89,8 +89,19 @@ func Test_ErrorFactory_sorted(t *testing.T) {
 	require := require.New(t)
 	require.NotNil(require)
 
+	// reset error factories
+	backupFactories := namedFactories
+	defer func() {
+		namedFactories = backupFactories
+	}()
+	namedFactories = map[string]ErrorFactory{}
+	fac2 := NewFactory("factory error 2")
+	fac0 := NewFactory("factory error 0")
+	fac1 := NewFactory("factory error 1")
+
 	factories := AllSortedNamedFactories()
-	require.Len(factories, 7)
-	require.Equal(ErrorWalkLoop, factories[0])
-	require.Equal(testFactory, factories[6])
+	require.Len(factories, 3)
+	require.Equal(fac0, factories[0])
+	require.Equal(fac1, factories[1])
+	require.Equal(fac2, factories[2])
 }
