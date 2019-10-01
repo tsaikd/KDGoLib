@@ -2,11 +2,11 @@ package cmder
 
 import (
 	"github.com/tsaikd/KDGoLib/version"
-	"gopkg.in/urfave/cli.v2"
+	"github.com/urfave/cli"
 )
 
 // NewCommand return cli.Command with module
-func NewCommand(module Module, usedModules ...Module) *cli.Command {
+func NewCommand(module Module, usedModules ...Module) cli.Command {
 	flags := []cli.Flag{}
 	flags = append(flags, module.Flags...)
 	flags = append(flags, module.Depend.Flags(usedModules...)...)
@@ -21,7 +21,7 @@ func NewCommand(module Module, usedModules ...Module) *cli.Command {
 	afterActions.Add(module.After)
 	afterActions.Add(module.Depend.AfterActions()...)
 
-	return &cli.Command{
+	return cli.Command{
 		Name:   module.Name,
 		Usage:  module.Usage,
 		Flags:  flags,
@@ -60,7 +60,7 @@ func NewApp(module Module, commandModules ...Module) *cli.App {
 		usedModules = append(usedModules, *mod)
 	}
 
-	cmds := []*cli.Command{}
+	cmds := []cli.Command{}
 	for _, cmdmod := range commandModules {
 		cmds = append(cmds, NewCommand(cmdmod, usedModules...))
 	}

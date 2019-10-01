@@ -1,6 +1,6 @@
 package cmder
 
-import "gopkg.in/urfave/cli.v2"
+import "github.com/urfave/cli"
 
 // NewModule create Module instance
 func NewModule(name string) *Module {

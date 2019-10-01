@@ -4,7 +4,7 @@ import (
 	"flag"
 
 	"github.com/tsaikd/KDGoLib/cliutil/cmder"
-	"gopkg.in/urfave/cli.v2"
+	"github.com/urfave/cli"
 )
 
 // NewTest create TestModule instance

@@ -2,7 +2,7 @@ package cmder
 
 import (
 	"github.com/tsaikd/KDGoLib/errutil"
-	"gopkg.in/urfave/cli.v2"
+	"github.com/urfave/cli"
 )
 
 // WrapAction wrap action with default error handler
@@ -22,7 +22,7 @@ func WrapAction(action cli.ActionFunc) cli.ActionFunc {
 				if message, err = formatter.FormatSkip(err, 1); err != nil {
 					panic(err)
 				}
-				return cli.Exit(message, 1)
+				return cli.NewExitError(message, 1)
 			}
 		}
 		return

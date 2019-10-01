@@ -6,7 +6,7 @@ KDGoLib
 ## packages
 
 * [cliutil/cmder](cliutil/cmder)
-	* Modularized command line tool, use [urfave/cli](https://github.com/urfave/cli/tree/v2) to execute
+	* Modularized command line tool, use [urfave/cli](https://github.com/urfave/cli) to execute
 * [cliutil/cobrather](cliutil/cobrather)
 	* Modularized command line tool, use [spf13/cobra](https://github.com/spf13/cobra) to execute
 * [enumutil](enumutil)

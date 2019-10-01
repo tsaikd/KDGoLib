@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/tsaikd/KDGoLib/version"
-	"gopkg.in/urfave/cli.v2"
+	"github.com/urfave/cli"
 )
 
 // VersionModule provide module of version,
