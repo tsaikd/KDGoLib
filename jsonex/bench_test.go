@@ -14,7 +14,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"fmt"
-	"gointernal/testenv"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -22,6 +21,8 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/tsaikd/KDGoLib/jsonex/gointernal/testenv"
 )
 
 type codeResponse struct {
