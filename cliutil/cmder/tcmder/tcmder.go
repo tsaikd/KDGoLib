@@ -16,7 +16,7 @@ func NewTest(module cmder.Module) TestModule {
 
 // TestModule used for testing cmder.Module
 type TestModule struct {
-	command *cli.Command
+	command cli.Command
 	context *cli.Context
 }
 
@@ -35,7 +35,7 @@ func (t TestModule) Setup() (err error) {
 		}
 	}
 	if t.command.Action != nil {
-		if err = t.command.Action(t.context); err != nil {
+		if err = cli.HandleAction(t.command.Action, t.context); err != nil {
 			return
 		}
 	}
