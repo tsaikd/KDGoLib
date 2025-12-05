@@ -15,11 +15,11 @@ require (
 	github.com/nlopes/slack v0.6.0
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
 	github.com/pmezard/go-difflib v1.0.0
-	github.com/sirupsen/logrus v1.4.2
+	github.com/sirupsen/logrus v1.8.3
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.4.0
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.7.0
 	github.com/tsaikd/govalidator v0.0.0-20161031084447-986f2244fc69
 	github.com/urfave/cli v1.22.1
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
